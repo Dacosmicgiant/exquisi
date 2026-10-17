@@ -60,6 +60,8 @@ export type Restaurant = {
   dish_name_language?: string;
   enabled_languages: string[];
   currency: string;
+  /** Also show diners an approximate price in their language's home currency (default true). */
+  show_converted_prices?: boolean;
   status: RestaurantStatus;
   plan: "standard";
   categories: Category[];

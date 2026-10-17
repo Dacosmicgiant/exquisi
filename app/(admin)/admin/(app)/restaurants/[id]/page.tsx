@@ -18,6 +18,7 @@ export default async function RestaurantSettings({ params }: { params: Promise<{
         dish_name_language: r.dish_name_language ?? "",
         enabled_languages: r.enabled_languages,
         currency: r.currency,
+        show_converted_prices: r.show_converted_prices ?? true,
         status: r.status,
       }}
     />

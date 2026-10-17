@@ -1,9 +1,13 @@
+import { isSupportedCurrency } from "@/lib/currencies";
 import { z } from "zod";
 import { ALLERGEN_KEYS } from "@/lib/allergens";
 import { DIETARY_KEYS } from "@/lib/db/types";
 import { FONT_KEYS } from "@/lib/theme/fonts";
 
-export const langMapSchema = z.record(z.string().min(2).max(8), z.string().max(4000));
+/** Language map from a form: values are trimmed and blank languages dropped (a space typed mid-sentence is fine in the box). */
+export const langMapSchema = z
+  .record(z.string().min(2).max(8), z.string().max(4000))
+  .transform((m) => Object.fromEntries(Object.entries(m).flatMap(([k, v]) => (v.trim() ? [[k, v.trim()]] : []))));
 
 export const imageRefSchema = z.object({
   provider: z.literal("cloudinary"),
@@ -29,7 +33,8 @@ export const restaurantSchema = z
     default_language: z.string().min(2).max(8),
     dish_name_language: z.string().max(8).optional(),
     enabled_languages: z.array(z.string().min(2).max(8)).min(1),
-    currency: z.string().length(3).toUpperCase(),
+    currency: z.string().length(3).toUpperCase().refine(isSupportedCurrency, "Choose a currency from the list"),
+    show_converted_prices: z.boolean().optional(),
     status: z.enum(["draft", "live", "archived"]),
   })
   .refine((r) => r.enabled_languages.includes(r.default_language), {

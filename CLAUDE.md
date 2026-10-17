@@ -81,6 +81,21 @@ Cloudinary is for images only.
 - **Pre-visit links:** `/m/{slug}` (or `/m/{slug}/{lang}`) is permanent and public; the admin QR tab has Copy-ready links
   and a booking message (`ShareLinks`, `menuAddress()`).
 
+## Prices in other currencies
+- A restaurant prices its menu in `restaurants.currency` (any of ~156 ISO currencies, `lib/currencies.ts`). On each diner page
+  an approximate price in the **home currency of the page language** is shown under it ("≈ ₹1,921"), toggled per restaurant by
+  `show_converted_prices` (default on). Language → currency is `lib/i18n/currency.ts` (a language is not a country: `en` → USD,
+  `ar` → SAR, `eo` → none; same currency as the menu → nothing shown).
+- Rates come from the free keyless `open.er-api.com` (`lib/currency/rates.ts`), fetched **server-side while the static page is
+  generated** (cached ~6h by Next's data cache; the page itself revalidates hourly). Never from the browser (rule 6). Any failure
+  just omits the approximate price. The footer carries the provider's required attribution (`lib/currency/attribution.ts`) plus
+  the pair and date: no words, so nothing to translate. The stored price is never converted or changed.
+
+## Menu admin forms
+Dish/category dialogs scroll inside a fixed header and footer (`components/admin/DialogLayout.tsx`). Source-language fields come
+first; translations are last, one language at a time (`TranslationsPanel`), because a restaurant can offer 100+ languages.
+Text boxes keep raw input (`setLangRaw`); `langMapSchema` trims and drops blanks on the server. Do not trim per keystroke.
+
 ## Media (images only)
 Uploads are fully signed, browser → Cloudinary directly (`lib/media/UploadButton.tsx`, the only place that
 uses the upload widget). `/api/media/sign` (staff only) signs the widget's exact params after checking the

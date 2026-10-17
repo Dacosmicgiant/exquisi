@@ -9,12 +9,14 @@ import { toRoman } from "@/lib/roman";
 import { Flag } from "@/components/diner/Flag";
 import { AnalyticsBeacon } from "@/components/diner/AnalyticsBeacon";
 import { SpeakScript } from "@/components/diner/Speak";
+import type { Fx } from "@/lib/currency/rates";
+import { FX_ATTRIBUTION } from "@/lib/currency/attribution";
 
 /**
  * The diner menu body (server component, zero client JS). Used by the static public route and
  * by the admin preview. Original dish names are always shown; translations are secondary.
  */
-export function MenuView({ data, lang, changeLanguageHref, numerals = true, analytics = false }: { data: MenuData; lang: string; changeLanguageHref: string; numerals?: boolean; analytics?: boolean }) {
+export function MenuView({ data, lang, changeLanguageHref, numerals = true, analytics = false, fx = null }: { data: MenuData; lang: string; changeLanguageHref: string; numerals?: boolean; analytics?: boolean; fx?: Fx | null }) {
   const { restaurant, categories, dishes, stories } = data;
   const def = restaurant.default_language;
   const L = getLanguage(lang);
@@ -84,7 +86,7 @@ export function MenuView({ data, lang, changeLanguageHref, numerals = true, anal
                 {items.map((d) => {
                   const priority = !!d.image && imageCount++ < 2;
                   const story = d.story_ids.map((id) => stories[id]).find(Boolean);
-                  return <DishItem key={d.id} dish={d} restaurant={restaurant} story={story} lang={lang} priority={priority} />;
+                  return <DishItem key={d.id} dish={d} restaurant={restaurant} story={story} lang={lang} priority={priority} fx={fx} />;
                 })}
               </ul>
             </section>
@@ -95,6 +97,13 @@ export function MenuView({ data, lang, changeLanguageHref, numerals = true, anal
       <footer className="mx-auto max-w-2xl px-6 pb-16 text-center">
         <div className="rule-hair mx-auto mb-6 max-w-[8rem]" />
         <p className="text-[0.85rem] leading-relaxed text-muted-foreground">{v.ui.askStaff}</p>
+        {fx && (
+          // the provider asks for attribution; a proper name and a date carry no words to translate
+          <p className="mt-4 text-[0.7rem] text-muted-foreground/80" dir="ltr">
+            {fx.from} → {fx.to} · {new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(fx.date))} ·{" "}
+            <a href={FX_ATTRIBUTION.href} rel="noopener" className="underline underline-offset-2">{FX_ATTRIBUTION.name}</a>
+          </p>
+        )}
       </footer>
       <SpeakScript />
       {analytics && <AnalyticsBeacon slug={restaurant.slug} lang={lang} />}

@@ -15,6 +15,7 @@ export default function NewRestaurantPage() {
           dish_name_language: "",
           enabled_languages: ["en"],
           currency: "EUR",
+          show_converted_prices: true,
           status: "draft",
         }}
       />

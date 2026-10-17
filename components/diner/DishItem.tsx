@@ -1,6 +1,7 @@
 import type { Dish, Restaurant, Story } from "@/lib/db/types";
 import { getLanguage } from "@/lib/i18n/languages";
-import { currencySymbol, formatPlain } from "@/lib/money";
+import type { Fx } from "@/lib/currency/rates";
+import { convertMajor, currencySymbol, formatApprox, formatPlain } from "@/lib/money";
 import { MediaImage } from "@/lib/media/MediaImage";
 import { getVocab } from "@/lib/i18n/vocab";
 import { shown, type Shown } from "@/lib/menu/text";
@@ -17,12 +18,15 @@ export function DishItem({
   story,
   lang,
   priority,
+  fx = null,
 }: {
   dish: Dish;
   restaurant: Restaurant;
   story?: Story;
   lang: string;
   priority?: boolean;
+  /** approximate price in the diner's home currency, when the restaurant shows one */
+  fx?: Fx | null;
 }) {
   const def = restaurant.default_language;
   const v = getVocab(lang);
@@ -55,6 +59,12 @@ export function DishItem({
               {formatPlain(dish.price, restaurant.currency)}
             </span>
           </div>
+
+          {fx && dish.price > 0 && (
+            <p className="-mt-0.5 text-end text-[0.8rem] text-muted-foreground" title={`${fx.from} → ${fx.to}`}>
+              <span dir="ltr">≈ {formatApprox(convertMajor(dish.price, fx.from, fx.rate), fx.to, lang)}</span>
+            </p>
+          )}
 
           {translatedName && (
             <p className="mt-0.5 text-[0.95rem] text-muted-foreground italic">

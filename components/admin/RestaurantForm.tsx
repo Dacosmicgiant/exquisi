@@ -3,11 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { CURRENCIES } from "@/lib/currencies";
 import { LangFields } from "@/components/admin/LangFields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
+import { Switch } from "@/components/ui/switch";
 import { EXPERIMENTAL, SUPPORTED, type LangMap } from "@/lib/i18n";
 import type { RestaurantFormValues } from "@/lib/validation";
 import {
@@ -15,7 +17,6 @@ import {
   updateRestaurant,
 } from "@/app/(admin)/admin/(app)/restaurants/actions";
 
-const CURRENCIES = ["EUR", "USD", "GBP", "CHF", "INR", "AED", "JPY"];
 
 const slugify = (s: string) =>
   s
@@ -149,14 +150,26 @@ export function RestaurantForm({
           </NativeSelect>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="currency" className="label-caps">Currency</Label>
+          <Label htmlFor="currency" className="label-caps">Menu currency</Label>
           <NativeSelect id="currency" value={v.currency} onChange={(e) => set("currency", e.target.value)}>
-            {CURRENCIES.map((c) => (
-              <option key={c}>{c}</option>
+            {CURRENCIES.map(([code, name]) => (
+              <option key={code} value={code}>{code} · {name}</option>
             ))}
           </NativeSelect>
+          <p className="text-xs text-muted-foreground">The currency the prices on this menu are entered and charged in.</p>
         </div>
       </div>
+
+      <label className="flex items-start justify-between gap-6 text-sm">
+        <span>
+          <span className="label-caps block">Show prices in the diner’s home currency</span>
+          <span className="mt-1 block max-w-md text-xs text-muted-foreground">
+            Under each price, an approximate amount in the currency of the country that speaks the language they picked
+            (e.g. “≈ ₹1,640” on the Hindi menu), converted at the day’s exchange rate. Languages with no single home currency show none.
+          </span>
+        </span>
+        <Switch checked={v.show_converted_prices ?? true} onCheckedChange={(c) => set("show_converted_prices", c)} />
+      </label>
 
       <div className="border-s-2 border-ornament ps-4 text-sm text-muted-foreground">
         <p className="label-caps text-foreground">Languages offered to diners</p>

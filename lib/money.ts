@@ -24,3 +24,19 @@ export function currencySymbol(currency: string, lang = "en"): string {
       .find((p) => p.type === "currency")?.value ?? currency
   );
 }
+
+/** Convert a price in minor units of `from` into a plain number of major units of `to`. */
+export const convertMajor = (minor: number, from: string, rate: number): number => toMajor(minor, from) * rate;
+
+/**
+ * "≈ ₹1,640": an approximate price in another currency, formatted for the reader's language.
+ * Big amounts drop the decimals; small ones keep them so "≈ $2.10" isn't shown as "$2".
+ */
+export function formatApprox(major: number, currency: string, lang = "en"): string {
+  const whole = major >= 100 || digits(currency) === 0;
+  return new Intl.NumberFormat(lang, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: whole ? 0 : undefined,
+  }).format(whole ? Math.round(major) : major);
+}

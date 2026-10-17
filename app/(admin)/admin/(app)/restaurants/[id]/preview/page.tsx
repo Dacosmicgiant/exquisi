@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
+import { menuFx } from "@/lib/currency/rates";
 import { MenuView } from "@/components/diner/MenuView";
 import { findLanguage, getLanguage } from "@/lib/i18n/languages";
 import { loadMenuForPreview } from "@/lib/menu/data";
@@ -24,7 +25,7 @@ export default async function PreviewPage({
   const { restaurant } = data;
   const lang = findLanguage(sp.lang)?.code ?? restaurant.default_language;
   const mode = sp.mode === "dark" ? "dark" : "light";
-  const theme = await getRestaurantTheme(restaurant.brand);
+  const [theme, fx] = await Promise.all([getRestaurantTheme(restaurant.brand), menuFx(restaurant, lang)]);
   const link = (l: string, m: string) => `/admin/restaurants/${id}/preview?lang=${l}&mode=${m}`;
 
   return (
@@ -57,7 +58,7 @@ export default async function PreviewPage({
       </div>
       <style dangerouslySetInnerHTML={{ __html: fontFaceCss(theme) + themeToScopedCss(theme, ".pv") }} />
       <div className="pv mx-auto max-w-3xl border shadow-soft" data-mode={mode} style={{ contain: "layout paint", position: "relative" }}>
-        <MenuView data={data} lang={lang} changeLanguageHref="#" numerals={theme.ornaments.romanNumerals} />
+        <MenuView data={data} lang={lang} changeLanguageHref="#" numerals={theme.ornaments.romanNumerals} fx={fx} />
       </div>
     </div>
   );

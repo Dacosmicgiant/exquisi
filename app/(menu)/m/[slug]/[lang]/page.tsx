@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { menuFx } from "@/lib/currency/rates";
 import { MenuView } from "@/components/diner/MenuView";
 import { findLanguage } from "@/lib/i18n/languages";
 import { getLiveMenu } from "@/lib/menu/data";
@@ -39,6 +40,6 @@ export default async function MenuPage({ params }: Props) {
     if (L.tier === "experimental" && restaurant.allow_experimental === false) notFound();
   }
 
-  const theme = await getRestaurantTheme(restaurant.brand);
-  return <MenuView data={data} lang={L.code} changeLanguageHref={`/m/${slug}`} numerals={theme.ornaments.romanNumerals} analytics />;
+  const [theme, fx] = await Promise.all([getRestaurantTheme(restaurant.brand), menuFx(restaurant, L.code)]);
+  return <MenuView data={data} lang={L.code} changeLanguageHref={`/m/${slug}`} numerals={theme.ornaments.romanNumerals} fx={fx} analytics />;
 }

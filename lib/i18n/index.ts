@@ -38,6 +38,17 @@ export function resolveText(
 export const langMap = (lang: string, value: string): LangMap =>
   value.trim() ? { [lang]: value.trim() } : {};
 
+/**
+ * Like setLang but for text boxes: keeps exactly what was typed (a trailing space must survive while
+ * someone is mid-sentence). Only an empty box removes the language; the server trims on save.
+ */
+export function setLangRaw(existing: LangMap | null | undefined, lang: string, value: string): LangMap {
+  const next = { ...(existing ?? {}) };
+  if (value) next[lang] = value;
+  else delete next[lang];
+  return next;
+}
+
 /** Merge one language's value into an existing map, keeping other languages. */
 export function setLang(
   existing: LangMap | null | undefined,

@@ -22,6 +22,7 @@ const restaurantSchema = new Schema<AnyDoc>(
     dish_name_language: { type: String, default: "" },
     enabled_languages: { type: [String], default: ["en"] },
     currency: { type: String, default: "EUR" },
+    show_converted_prices: { type: Boolean, default: true },
     status: { type: String, enum: ["draft", "live", "archived"], default: "draft", index: true },
     plan: { type: String, enum: ["production", "standard"], default: "standard" },
     categories: { type: [{ _id: false, key: String, name: M, order: Number, tx: M }], default: [] },
