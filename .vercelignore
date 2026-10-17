@@ -1,0 +1,10 @@
+# never upload local secrets or build/test artefacts
+.env*
+!.env.example
+node_modules
+.next
+reports
+.lighthouseci
+tests
+scripts
+*.log

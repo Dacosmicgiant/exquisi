@@ -1,0 +1,77 @@
+/* Diner pages: editorial, old-money. Colours/fonts all come from theme variables. */
+.diner {
+  /* non-Latin scripts rely on system fonts so we never ship more than the two theme font files */
+  font-family: var(--font-body), system-ui, "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Tamil",
+    "Noto Sans Telugu", "Noto Sans Arabic", "Noto Sans Hebrew", "Noto Sans Thai", "Noto Sans JP", "Noto Sans SC",
+    "Noto Sans TC", "Noto Sans KR", sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100dvh;
+  position: relative;
+}
+.diner h1, .diner h2, .diner h3, .diner .font-display {
+  font-family: var(--font-display), "Iowan Old Style", Georgia, "Noto Serif", "Noto Serif Devanagari", "Noto Naskh Arabic",
+    "Noto Serif JP", "Noto Serif SC", serif;
+}
+/* barely-there paper grain */
+.diner::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: calc(var(--grain-opacity, 1) * 0.5);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .45  0 0 0 0 .35  0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  z-index: 0;
+}
+.diner > * { position: relative; z-index: 1; }
+
+/* thin-over-thick rule */
+.rule-double {
+  height: 5px;
+  border-top: 1px solid var(--ornament);
+  border-bottom: 2px solid var(--ornament);
+  opacity: calc(0.35 + var(--ornament-double-rule, 1) * 0.65);
+}
+.rule-hair { height: 1px; background: var(--ornament); opacity: 0.6; }
+
+/* dish ........ price */
+.leader { display: flex; align-items: baseline; gap: 0.6rem; }
+.leader > .fill {
+  flex: 1;
+  min-width: 1.5rem;
+  border-bottom: 1.5px dotted color-mix(in oklab, var(--ornament) 70%, transparent);
+  transform: translateY(-0.28em);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid color-mix(in oklab, var(--border) 85%, var(--foreground));
+  padding: 0.12rem 0.5rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.chip-warn { border-color: color-mix(in oklab, var(--highlight) 60%, transparent); color: var(--highlight); }
+
+details.story > summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ornament);
+}
+details.story > summary::-webkit-details-marker { display: none; }
+details.story > summary::after { content: "+"; font-size: 1.1em; line-height: 1; transition: transform var(--motion-duration) var(--motion-ease); }
+details.story[open] > summary::after { transform: rotate(45deg); }
+details.story .body { border-inline-start: 1px solid var(--ornament); padding-inline-start: 1rem; margin-top: 0.75rem; }
+
+/* gentle entrance, CSS only */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise var(--motion-duration, 600ms) var(--motion-ease, ease-out) both; }
+
+.lang-option { content-visibility: auto; contain-intrinsic-size: auto 4.4rem; transition: background var(--motion-duration) var(--motion-ease), border-color var(--motion-duration) var(--motion-ease); }
+.lang-option:hover, .lang-option:focus-visible { background: var(--accent); }
