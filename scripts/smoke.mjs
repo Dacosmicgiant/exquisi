@@ -60,6 +60,8 @@ const p = await phone.newPage();
 await p.goto(`${BASE}/r/${before.code}`);
 check("QR redirect lands on the language screen", new URL(p.url()).pathname === `/m/${SLUG}`, p.url());
 await p.waitForSelector("[aria-label='Suggested for you'] a");
+// the server renders the default language in this slot; the picker swaps in the device language after hydration
+await p.waitForSelector(`[aria-label='Suggested for you'] a[href='/m/${SLUG}/hi']`, { timeout: 15000 }).catch(() => {});
 const suggested = await p.locator("[aria-label='Suggested for you'] a").first().getAttribute("href");
 check("phone language (Hindi) is suggested first", suggested === `/m/${SLUG}/hi`, suggested);
 check("native name in large type", (await p.locator("[aria-label='Suggested for you'] a").first().innerText()).includes("हिन्दी"));
@@ -97,6 +99,32 @@ const bad = await adminCtx.request.post(`${BASE}/api/events`, { data: "{not json
 check("events endpoint rejects junk", bad.status() === 400);
 const forged = await adminCtx.request.post(`${BASE}/api/events`, { data: { slug: SLUG, type: "story_open", session_id: "forged-session-1", language: "hi", dish_id: "000000000000000000000000" } });
 check("events endpoint answers 204 and ignores a dish that isn't the restaurant's", forged.status() === 204);
+
+// ── text-to-speech: buttons appear only for languages the device can speak ────────────
+const speechCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await speechCtx.addInitScript(() => {
+  const spoken = [];
+  window.__spoken = spoken;
+  const voices = [{ lang: "it_IT" }, { lang: "hi-IN" }];
+  Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: function (t) { this.text = t; } });
+  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { getVoices: () => voices, speak: (u) => spoken.push({ text: u.text, voice: u.voice && u.voice.lang }), cancel() {}, addEventListener() {} } });
+});
+const sp = await speechCtx.newPage();
+await sp.goto(`${BASE}/m/${SLUG}/hi`);
+await sp.waitForSelector("h3");
+await sp.waitForSelector("h3 button[data-speak]:not([hidden])", { timeout: 5000 }).catch(() => {});
+check("speaker buttons appear when the device has a voice", (await sp.locator("button[data-speak]:not([hidden])").count()) > 0);
+await sp.locator("h3 button[data-speak]:not([hidden])").first().click();
+const said = await sp.evaluate(() => window.__spoken);
+check("a dish name is pronounced in the language it is written in (Italian)", said.length > 0 && said[0].voice === "it_IT", JSON.stringify(said[0] ?? null));
+await speechCtx.close();
+const quiet = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await quiet.addInitScript(() => Object.defineProperty(window, "speechSynthesis", { configurable: true, value: undefined }));
+const qp = await quiet.newPage();
+await qp.goto(`${BASE}/m/${SLUG}/hi`);
+await qp.waitForSelector("h3");
+await qp.waitForTimeout(800);
+check("no speaker buttons on a device without speech", (await qp.locator("button[data-speak]:not([hidden])").count()) === 0);
 
 await browser.close();
 console.log(failed ? `\n${failed} check(s) failed` : "\nall checks passed");

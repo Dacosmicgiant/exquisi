@@ -8,6 +8,7 @@ import type { MenuData } from "@/lib/menu/data";
 import { toRoman } from "@/lib/roman";
 import { Flag } from "@/components/diner/Flag";
 import { AnalyticsBeacon } from "@/components/diner/AnalyticsBeacon";
+import { SpeakScript } from "@/components/diner/Speak";
 
 /**
  * The diner menu body (server component, zero client JS). Used by the static public route and
@@ -95,6 +96,7 @@ export function MenuView({ data, lang, changeLanguageHref, numerals = true, anal
         <div className="rule-hair mx-auto mb-6 max-w-[8rem]" />
         <p className="text-[0.85rem] leading-relaxed text-muted-foreground">{v.ui.askStaff}</p>
       </footer>
+      <SpeakScript />
       {analytics && <AnalyticsBeacon slug={restaurant.slug} lang={lang} />}
     </div>
   );

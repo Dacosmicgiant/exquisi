@@ -104,6 +104,19 @@ export function RestaurantForm({
         )}
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="dish-lang" className="label-caps">Dish names are written in</Label>
+        <NativeSelect id="dish-lang" value={v.dish_name_language ?? ""} onChange={(e) => set("dish_name_language", e.target.value)} className="max-w-sm">
+          <option value="">Same as the menu language</option>
+          {[...SUPPORTED, ...EXPERIMENTAL].map((l) => (
+            <option key={l.code} value={l.code}>{l.name} · {l.native}</option>
+          ))}
+        </NativeSelect>
+        <p className="text-xs text-muted-foreground">
+          For an English menu of Italian dishes choose Italian: the speaker button then pronounces “Tagliolini al Tartufo” in an Italian voice, so a diner can say it to the waiter.
+        </p>
+      </div>
+
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="default-lang" className="label-caps">Default language</Label>

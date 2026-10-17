@@ -4,6 +4,7 @@ import { currencySymbol, formatPlain } from "@/lib/money";
 import { MediaImage } from "@/lib/media/MediaImage";
 import { getVocab } from "@/lib/i18n/vocab";
 import { shown, type Shown } from "@/lib/menu/text";
+import { SpeakButton } from "@/components/diner/Speak";
 
 /** A span that declares its own language when it had to fall back to the source text. */
 function T({ s, pageLang }: { s: Shown; pageLang: string }) {
@@ -32,6 +33,9 @@ export function DishItem({
   const ctx = shown(dish.context, dish.tx, "context", lang, def);
   const sTitle = story ? shown(story.title, story.tx, "title", lang, def) : null;
   const sBody = story ? shown(story.text_fallback, story.tx, "text_fallback", lang, def) : null;
+  // dish names are pronounced in the language they are written in (an English menu of Italian dishes → Italian voice)
+  const nameLang = restaurant.dish_name_language || def;
+  const listen = v.ui.listen;
   const hot = dish.spice_level > 0 ? v.spice[Math.min(3, dish.spice_level) - 1] : null;
   const dietary = dish.dietary.filter((k) => k in v.dietary) as (keyof typeof v.dietary)[];
 
@@ -43,6 +47,7 @@ export function DishItem({
           <div className="leader">
             <h3 className="text-[1.45rem] leading-tight" lang={def} dir={getLanguage(def).dir}>
               {original}
+              <SpeakButton text={original} lang={nameLang} label={listen} />
             </h3>
             <span className="fill" aria-hidden="true" />
             <span className="font-numeric text-[1.05rem] whitespace-nowrap text-highlight" dir="ltr">
@@ -60,6 +65,7 @@ export function DishItem({
           {desc.text && (
             <p className="mt-2 text-[0.97rem] leading-relaxed">
               <T s={desc} pageLang={lang} />
+              <SpeakButton text={[desc.text, ctx.lang === desc.lang ? ctx.text : ""].filter(Boolean).join(". ")} lang={desc.lang} label={listen} />
             </p>
           )}
           {ctx.text && (
@@ -103,6 +109,7 @@ export function DishItem({
                 )}
                 <p className="mt-2 text-[0.95rem] leading-relaxed text-muted-foreground">
                   <T s={sBody} pageLang={lang} />
+                  <SpeakButton text={[sTitle?.text, sBody.text].filter(Boolean).join(". ")} lang={sBody.lang} label={listen} />
                 </p>
               </div>
             </details>

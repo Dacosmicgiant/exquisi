@@ -69,6 +69,14 @@ details.story > summary::after { content: "+"; font-size: 1.1em; line-height: 1;
 details.story[open] > summary::after { transform: rotate(45deg); }
 details.story .body { border-inline-start: 1px solid var(--ornament); padding-inline-start: 1rem; margin-top: 0.75rem; }
 
+/* speaker (text-to-speech) button: hidden until the device is known to speak the language */
+.speak { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; width: 1.6rem; height: 1.6rem; margin-inline-start: 0.45rem; flex: none;
+  border: 1px solid color-mix(in oklab, var(--ornament) 60%, transparent); color: var(--ornament); background: transparent; border-radius: 999px; cursor: pointer;
+  transition: background var(--motion-duration) var(--motion-ease), color var(--motion-duration) var(--motion-ease); }
+.speak[hidden] { display: none; }
+.speak:hover, .speak:focus-visible { background: var(--accent); outline: none; }
+.speak[data-speaking] { background: var(--ornament); color: var(--background); }
+
 /* gentle entrance, CSS only */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .rise { animation: rise var(--motion-duration, 600ms) var(--motion-ease, ease-out) both; }

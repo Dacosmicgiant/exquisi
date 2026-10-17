@@ -32,8 +32,7 @@ export function MediaImage({ image, alt, width, height, sizes, priority, classNa
       sizes={sizes}
       priority={priority}
       loading={priority ? undefined : "lazy"}
-      crop={crop ? { type: "fill", source: true } : undefined}
-      gravity={crop ? "auto" : undefined}
+      crop={crop ? { type: "fill", gravity: "auto", source: true } : undefined}
       format="auto"
       quality="auto"
       className={className}

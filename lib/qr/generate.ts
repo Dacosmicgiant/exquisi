@@ -7,6 +7,12 @@ export function qrTargetUrl(code: string, origin?: string): string {
   return `${base}/r/${code}`;
 }
 
+/** Permanent public address of a restaurant's menu (optionally straight into one language), e.g. for booking messages. */
+export function menuAddress(slug: string, lang?: string, origin?: string): string {
+  const base = (process.env.APP_URL || origin || "http://localhost:3000").replace(/\/+$/, "");
+  return `${base}/m/${slug}${lang ? `/${lang}` : ""}`;
+}
+
 export function qrPng(url: string, width = 1024): Promise<Buffer> {
   return QRCode.toBuffer(url, { type: "png", errorCorrectionLevel: "M", margin: 2, width, color: { dark: "#1b1713", light: "#ffffff" } });
 }

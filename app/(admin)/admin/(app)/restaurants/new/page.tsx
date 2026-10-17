@@ -12,6 +12,7 @@ export default function NewRestaurantPage() {
           slug: "",
           name: {},
           default_language: "en",
+          dish_name_language: "",
           enabled_languages: ["en"],
           currency: "EUR",
           status: "draft",

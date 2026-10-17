@@ -44,6 +44,8 @@ export type Restaurant = {
   name: LangMap;
   brand: Brand;
   default_language: string;
+  /** Language the DISH NAMES are written in (e.g. "it" for an Italian menu written in English), used to pronounce them. Empty = the menu language. */
+  dish_name_language?: string;
   enabled_languages: string[];
   currency: string;
   status: RestaurantStatus;

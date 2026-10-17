@@ -27,6 +27,7 @@ export const restaurantSchema = z
     slug: slugSchema,
     name: nonEmptyMap("Name is required"),
     default_language: z.string().min(2).max(8),
+    dish_name_language: z.string().max(8).optional(),
     enabled_languages: z.array(z.string().min(2).max(8)).min(1),
     currency: z.string().length(3).toUpperCase(),
     status: z.enum(["draft", "live", "archived"]),

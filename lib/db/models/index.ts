@@ -19,6 +19,7 @@ const restaurantSchema = new Schema<AnyDoc>(
     name: { type: M, default: {} },
     brand: { type: M, default: {} },
     default_language: { type: String, default: "en" },
+    dish_name_language: { type: String, default: "" },
     enabled_languages: { type: [String], default: ["en"] },
     currency: { type: String, default: "EUR" },
     status: { type: String, enum: ["draft", "live", "archived"], default: "draft", index: true },

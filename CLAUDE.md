@@ -72,6 +72,15 @@ Cloudinary is for images only.
    not import motion libs (`motion`, Magic UI, Aceternity); diner motion is CSS-only.
 8. **Analytics** are anonymous, fire-and-forget (`sendBeacon`), never block rendering.
 
+## Text-to-speech and pre-visit links
+- **Speech uses the diner's device voices** (Web Speech API; `components/diner/Speak.tsx`): free, no server call. Buttons are
+  server-rendered `hidden`; an inline script (not a React client component) reveals only those whose language the device
+  can speak (`lib/i18n/tts.ts` maps catalog codes to BCP-47 tags). Dish NAMES are pronounced in
+  `restaurants.dish_name_language` (e.g. Italian for an English menu of Italian dishes), descriptions and stories in the
+  page language. Buttons carry `suppressHydrationWarning` because the script un-hides them before hydration. No cloud TTS.
+- **Pre-visit links:** `/m/{slug}` (or `/m/{slug}/{lang}`) is permanent and public; the admin QR tab has Copy-ready links
+  and a booking message (`ShareLinks`, `menuAddress()`).
+
 ## Media (images only)
 Uploads are fully signed, browser → Cloudinary directly (`lib/media/UploadButton.tsx`, the only place that
 uses the upload widget). `/api/media/sign` (staff only) signs the widget's exact params after checking the
