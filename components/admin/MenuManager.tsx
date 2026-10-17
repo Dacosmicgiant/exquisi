@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, ClipboardPaste, ImageIcon, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { CollapseAll, useCollapsed } from "@/components/admin/Collapsible";
 import { CategoryDialog } from "@/components/admin/CategoryDialog";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { DishDialog } from "@/components/admin/DishDialog";
@@ -70,7 +71,7 @@ export function MenuManager({
   const [importOpen, setImportOpen] = useState(false);
   const [confirm, setConfirm] = useState<{ title: string; description: string; run: () => void } | null>(null);
   const [query, setQuery] = useState("");
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const folded = useCollapsed();
   const [active, setActive] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -106,7 +107,7 @@ export function MenuManager({
     );
     els.forEach((e) => io.observe(e));
     return () => io.disconnect();
-  }, [categories, q, collapsed]);
+  }, [categories, q, folded.count]);
 
   useEffect(() => {
     if (!active) return;
@@ -130,21 +131,10 @@ export function MenuManager({
 
   const catName = (c: Category) => resolveText(c.name, lang, lang);
   const jump = (key: string) => {
-    setCollapsed((s) => {
-      if (!s.has(key)) return s;
-      const n = new Set(s);
-      n.delete(key);
-      return n;
-    });
+    folded.open(key);
     document.getElementById(`cat-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-  const toggleCollapsed = (key: string) =>
-    setCollapsed((s) => {
-      const n = new Set(s);
-      if (!n.delete(key)) n.add(key);
-      return n;
-    });
-  const allCollapsed = categories.length > 0 && collapsed.size >= categories.length;
+  const catKeys = categories.map((c) => c.key);
   const openNewDish = (category?: string) => {
     setDishKey((k) => k + 1);
     setDishDialog({ open: true, category: category ?? active ?? categories[0]?.key ?? "" });
@@ -170,11 +160,7 @@ export function MenuManager({
             )}
           </div>
           <div className="ms-auto flex flex-wrap items-center gap-2">
-            {categories.length > 1 && (
-              <Button variant="ghost" size="sm" onClick={() => setCollapsed(allCollapsed ? new Set() : new Set(categories.map((c) => c.key)))}>
-                {allCollapsed ? "Expand all" : "Collapse all"}
-              </Button>
-            )}
+            <CollapseAll keys={catKeys} collapsed={folded.count} onChange={(c) => folded.setAll(catKeys, c)} />
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <ClipboardPaste className="size-4" /> <span className="hidden sm:inline">Import</span>
             </Button>
@@ -251,13 +237,13 @@ export function MenuManager({
 
       {shownCategories.map(({ cat, all, shown }) => {
         const ci = categories.findIndex((c) => c.key === cat.key);
-        const isCollapsed = collapsed.has(cat.key) && !q;
+        const isCollapsed = folded.isCollapsed(cat.key) && !q;
         return (
           <section key={cat.key} id={`cat-${cat.key}`} aria-labelledby={`cat-h-${cat.key}`} className="scroll-mt-44">
             <header className="flex items-end justify-between gap-4 border-b border-ornament/60 pb-3">
               <button
                 type="button"
-                onClick={() => toggleCollapsed(cat.key)}
+                onClick={() => folded.toggle(cat.key)}
                 aria-expanded={!isCollapsed}
                 aria-controls={`cat-list-${cat.key}`}
                 className="group flex min-w-0 items-baseline gap-4 text-start"

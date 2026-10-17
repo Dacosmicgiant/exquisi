@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 import { menuFx } from "@/lib/currency/rates";
+import { PreviewLanguageSwitcher } from "@/components/admin/PreviewLanguageSwitcher";
 import { MenuView } from "@/components/diner/MenuView";
 import { findLanguage, getLanguage } from "@/lib/i18n/languages";
 import { loadMenuForPreview } from "@/lib/menu/data";
@@ -36,16 +37,12 @@ export default async function PreviewPage({
           {restaurant.status !== "live" && " This restaurant is not live yet, so the public address shows “Menu unavailable”."}
         </p>
         <div className="flex flex-wrap items-center gap-1.5">
-          {restaurant.enabled_languages.map((l) => (
-            <Link
-              key={l}
-              href={link(l, mode)}
-              className={`label-caps border px-2.5 py-1 text-[0.62rem] ${l === lang ? "border-ornament text-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
-              lang={l}
-            >
-              {getLanguage(l).native}
-            </Link>
-          ))}
+          <PreviewLanguageSwitcher
+            restaurantId={id}
+            current={lang}
+            mode={mode}
+            options={restaurant.enabled_languages.map((l) => ({ code: l, label: `${getLanguage(l).native} · ${getLanguage(l).name}` }))}
+          />
           <Link href={link(lang, mode === "dark" ? "light" : "dark")} className="label-caps border border-border px-2.5 py-1 text-[0.62rem] text-muted-foreground hover:text-foreground">
             {mode === "dark" ? "Light" : "Dark"}
           </Link>

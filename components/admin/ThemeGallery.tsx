@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, Search } from "lucide-react";
+import { CollapseAll, Collapsible, useCollapsed } from "@/components/admin/Collapsible";
 import { Input } from "@/components/ui/input";
 import { fontFaceCss, themeToScopedCss } from "@/lib/theme/css";
 import { FONT_CATALOG } from "@/lib/theme/fonts";
@@ -124,6 +125,7 @@ export function ThemeGallery({
 }) {
   const [cat, setCat] = useState<string>(ALL);
   const [q, setQ] = useState("");
+  const folded = useCollapsed();
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -131,6 +133,8 @@ export function ThemeGallery({
     return m;
   }, [themes]);
   const customCount = themes.filter((t) => t.custom).length;
+  // a stable CSS class per theme, whatever section it is shown in
+  const indexOf = useMemo(() => new Map(themes.map((t, i) => [t.ref, i])), [themes]);
 
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -140,6 +144,33 @@ export function ThemeGallery({
         (!needle || `${t.name} ${t.categoryLabel} ${t.description}`.toLowerCase().includes(needle)),
     );
   }, [themes, cat, q]);
+
+  // "All" without a search is shown as one foldable section per category; anything narrower is a plain grid
+  const grouped = cat === ALL && !q.trim();
+  const sections = useMemo(() => {
+    if (!grouped) return [];
+    const out: { key: string; label: string; items: GalleryTheme[] }[] = [];
+    const mine = shown.filter((t) => t.custom);
+    if (mine.length) out.push({ key: MINE, label: "My themes", items: mine });
+    for (const c of THEME_CATEGORIES) {
+      const items = shown.filter((t) => !t.custom && t.category === c.key);
+      if (items.length) out.push({ key: c.key, label: c.label, items });
+    }
+    return out;
+  }, [grouped, shown]);
+  const sectionKeys = sections.map((s) => s.key);
+
+  const card = (t: GalleryTheme) => (
+    <ThemeCard
+      key={t.ref}
+      option={t}
+      index={indexOf.get(t.ref) ?? 0}
+      selected={selectedRef === t.ref}
+      onSelect={onSelect ? () => onSelect(t) : undefined}
+      actions={actions?.(t)}
+    />
+  );
+  const gridCls = "mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4";
 
   const chip = (key: string, label: string, n: number) => (
     <button
@@ -168,19 +199,32 @@ export function ThemeGallery({
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search themes" className="pl-8" aria-label="Search themes" />
       </div>
-      <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {cat === ALL && !q.trim() && leading}
-        {shown.map((t, i) => (
-          <ThemeCard
-            key={t.ref}
-            option={t}
-            index={i}
-            selected={selectedRef === t.ref}
-            onSelect={onSelect ? () => onSelect(t) : undefined}
-            actions={actions?.(t)}
-          />
-        ))}
-      </ul>
+      {grouped ? (
+        <div className="mt-6">
+          {leading && <ul className={gridCls.replace("mt-4", "mb-2")}>{leading}</ul>}
+          <div className="flex justify-end">
+            <CollapseAll keys={sectionKeys} collapsed={folded.count} onChange={(c) => folded.setAll(sectionKeys, c)} />
+          </div>
+          <div className="divide-y border-y">
+            {sections.map((sec) => (
+              <Collapsible
+                key={sec.key}
+                level="h3"
+                title={sec.label}
+                meta={`${sec.items.length} ${sec.items.length === 1 ? "theme" : "themes"}`}
+                open={!folded.isCollapsed(sec.key)}
+                onOpenChange={() => folded.toggle(sec.key)}
+                headerClassName="py-3"
+                titleClassName="font-display text-xl"
+              >
+                <ul className={`${gridCls} pb-5`}>{sec.items.map(card)}</ul>
+              </Collapsible>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <ul className={`${gridCls} mt-6`}>{shown.map(card)}</ul>
+      )}
       {shown.length === 0 && <p className="mt-8 text-sm text-muted-foreground">No themes match.</p>}
     </div>
   );

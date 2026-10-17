@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BlurFade } from "@/components/ui/blur-fade";
+import { ShowMoreList } from "@/components/admin/ShowMoreList";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import type { AnalyticsSummary, DailyPoint, LanguageStat } from "@/lib/db/types";
 import { getLanguage } from "@/lib/i18n/languages";
@@ -106,9 +107,9 @@ export function AnalyticsView({
       <div className="grid gap-12 lg:grid-cols-2">
         <section data-testid="languages">
           <h2 className="border-b pb-3 text-2xl">Languages</h2>
-          <ul className="mt-4 space-y-3">
-            {languages.length === 0 && <li className="text-sm text-muted-foreground">No data yet.</li>}
-            {languages.slice(0, 12).map((l) => {
+          {languages.length === 0 && <p className="mt-4 text-sm text-muted-foreground">No data yet.</p>}
+          <ShowMoreList className="mt-4 space-y-3" first={12} noun="languages">
+            {languages.map((l) => {
               const L = getLanguage(l.language);
               const pct = Math.round((l.views / langTotal) * 100);
               return (
@@ -121,22 +122,22 @@ export function AnalyticsView({
                 </li>
               );
             })}
-          </ul>
+          </ShowMoreList>
           <p className="mt-4 text-xs text-muted-foreground">A language that diners pick but this restaurant hasn’t enabled is a good candidate to translate ahead of time.</p>
         </section>
 
         <section data-testid="stories">
           <h2 className="border-b pb-3 text-2xl">Most-opened stories</h2>
-          <ol className="mt-4 divide-y">
-            {dishes.length === 0 && <li className="py-3 text-sm text-muted-foreground">No stories opened yet.</li>}
-            {dishes.slice(0, 10).map((d, i) => (
+          {dishes.length === 0 && <p className="mt-4 py-3 text-sm text-muted-foreground">No stories opened yet.</p>}
+          <ShowMoreList as="ol" className="mt-4 divide-y" first={10} noun="dishes">
+            {dishes.map((d, i) => (
               <li key={d.id} className="flex items-baseline gap-4 py-3">
                 <span className="font-numeric w-5 text-sm text-muted-foreground">{i + 1}</span>
                 <span className="flex-1 font-display text-lg leading-tight">{d.name}</span>
                 <span className="font-numeric text-sm">{d.opens}</span>
               </li>
             ))}
-          </ol>
+          </ShowMoreList>
         </section>
       </div>
     </div>

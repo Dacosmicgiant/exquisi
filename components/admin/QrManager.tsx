@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
+import { ShowMoreButton, useShowMore } from "@/components/admin/Collapsible";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { QrCode } from "@/lib/db/types";
@@ -13,6 +14,12 @@ export function QrManager({ restaurantId, codes, urls }: { restaurantId: string;
   const router = useRouter();
   const [pending, start] = useTransition();
   const [label, setLabel] = useState("");
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const matching = codes.filter((c) => !needle || c.label.toLowerCase().includes(needle));
+  // each card loads a QR image, so a long list is revealed in steps (a search shows every match)
+  const more = useShowMore(matching.length, 6, 6);
+  const list = needle ? matching : matching.slice(0, more.limit);
 
   function add(e: React.FormEvent) {
     e.preventDefault();
@@ -45,8 +52,18 @@ export function QrManager({ restaurantId, codes, urls }: { restaurantId: string;
       </form>
 
       {codes.length === 0 && <p className="border border-dashed p-10 text-center text-muted-foreground">No QR codes yet.</p>}
+      {codes.length > 6 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[12rem] max-w-xs flex-1">
+            <Search className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search codes" aria-label="Search QR codes" className="ps-8" />
+          </div>
+          <p className="text-sm text-muted-foreground" role="status">{needle ? `${matching.length} of ${codes.length}` : `${codes.length} codes`}</p>
+        </div>
+      )}
+      {codes.length > 0 && needle && matching.length === 0 && <p className="text-sm text-muted-foreground">No code matches “{q}”.</p>}
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {codes.map((c) => (
+        {list.map((c) => (
           <li key={c.id} className="border bg-card p-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={img(c.id)} alt={`QR code ${c.label}`} className="mx-auto aspect-square w-44 border bg-white p-1" />
@@ -71,6 +88,7 @@ export function QrManager({ restaurantId, codes, urls }: { restaurantId: string;
           </li>
         ))}
       </ul>
+      {!needle && <ShowMoreButton total={matching.length} limit={more.limit} onMore={more.more} onAll={more.all} noun="codes" />}
     </div>
   );
 }

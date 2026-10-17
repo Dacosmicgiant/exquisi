@@ -96,6 +96,15 @@ Dish/category dialogs scroll inside a fixed header and footer (`components/admin
 first; translations are last, one language at a time (`TranslationsPanel`), because a restaurant can offer 100+ languages.
 Text boxes keep raw input (`setLangRaw`); `langMapSchema` trims and drops blanks on the server. Do not trim per keystroke.
 
+## Long lists (admin)
+Any list that can grow past a screen uses the shared folding pattern in `components/admin/Collapsible.tsx`: `Collapsible`
+(chevron header, count, actions that work while folded, body unmounted when folded), `useCollapsed` + `CollapseAll`, and
+`useShowMore` / `ShowMoreButton` / `ShowMoreList` (reveal in steps; the last works from server components). Search force-opens
+folded groups. Applied to: menu categories, the translation language checklist (by tier), offered-language status (needs
+translating / complete), review & edit (per dish), glossary, theme gallery (by category), restaurants (by status), QR codes,
+analytics rows. Preview uses one language `<select>`, not a button per language. Don't render one control per language.
+The diner language screen is deliberately NOT folded: diners must see every offered language (search + suggested on top).
+
 ## Media (images only)
 Uploads are fully signed, browser → Cloudinary directly (`lib/media/UploadButton.tsx`, the only place that
 uses the upload widget). `/api/media/sign` (staff only) signs the widget's exact params after checking the

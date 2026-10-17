@@ -51,12 +51,19 @@ export default async function Dashboard() {
         </p>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {all.map((r, i) => (
+          {all.slice(0, 6).map((r, i) => (
             <BlurFade key={r.id} delay={0.05 * i}>
               <RestaurantCard r={r} />
             </BlurFade>
           ))}
         </div>
+      )}
+      {all.length > 6 && (
+        <p className="mt-6">
+          <Link href="/admin/restaurants" className="label-caps text-[0.7rem] text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            All {all.length} restaurants →
+          </Link>
+        </p>
       )}
     </>
   );

@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Loader2, Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Search, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Collapsible } from "@/components/admin/Collapsible";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -98,6 +99,10 @@ export function TranslationsManager(props: {
   const [watchUntil, setWatchUntil] = useState(0);
   const [lang, setLang] = useState(rows[0]?.code ?? "");
   const [filter, setFilter] = useState<"attention" | "all">("attention");
+  const [reviewOpen, setReviewOpen] = useState(true);
+  const [reviewQuery, setReviewQuery] = useState("");
+  // per-dish folding: an explicit choice wins, otherwise only the first few groups start open
+  const [groupChoice, setGroupChoice] = useState<Record<string, boolean>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [confirmForce, setConfirmForce] = useState<string | null | undefined>(undefined);
   const [confirmGenerate, setConfirmGenerate] = useState<string[] | null>(null);
@@ -126,14 +131,28 @@ export function TranslationsManager(props: {
   };
 
   const current = rows.find((r) => r.code === lang);
+  const rq = reviewQuery.trim().toLowerCase();
   const visible = useMemo(
     () =>
       review.filter((u) => {
         const st = u.byLang[lang]?.state;
-        return filter === "all" || (st && st !== "fresh" && st !== "staff");
+        if (!(filter === "all" || (st && st !== "fresh" && st !== "staff"))) return false;
+        return !rq || `${u.who} ${u.group} ${u.source} ${u.byLang[lang]?.text ?? ""}`.toLowerCase().includes(rq);
       }),
-    [review, lang, filter],
+    [review, lang, filter, rq],
   );
+  const groups = useMemo(() => {
+    const m = new Map<string, { key: string; title: string; kind: string; units: ReviewUnit[] }>();
+    for (const u of visible) {
+      const g = m.get(u.entityId) ?? { key: u.entityId, title: u.who || u.group, kind: u.group, units: [] };
+      g.units.push(u);
+      m.set(u.entityId, g);
+    }
+    return [...m.values()];
+  }, [visible]);
+  const groupOpen = (key: string, i: number) => !!rq || (groupChoice[key] ?? i < 3);
+  const setAllGroups = (open: boolean) => setGroupChoice(Object.fromEntries(groups.map((g) => [g.key, open])));
+  const openCount = groups.filter((g, i) => groupOpen(g.key, i)).length;
 
   return (
     <div className="space-y-16">
@@ -163,7 +182,7 @@ export function TranslationsManager(props: {
         )}
 
         {rows.length > 10 ? (
-          <CompactTable rows={rows} defaultNative={props.defaultNative} pending={pending} onTranslate={(c) => translate(c)} onReview={(c) => { setLang(c); document.getElementById("review")?.scrollIntoView({ behavior: "smooth" }); }} />
+          <CompactTable rows={rows} defaultNative={props.defaultNative} pending={pending} onTranslate={(c) => translate(c)} onReview={(c) => { setLang(c); setReviewOpen(true); setTimeout(() => document.getElementById("review")?.scrollIntoView({ behavior: "smooth" }), 50); }} />
         ) : (
         <ul className="mt-8 grid gap-5 md:grid-cols-2">
           {rows.map((r) => {
@@ -222,7 +241,7 @@ export function TranslationsManager(props: {
                   <Button size="sm" variant="outline" onClick={() => setConfirmForce(r.code)} disabled={pending || isRunning}>
                     <RefreshCw className="size-3.5" /> Regenerate
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setLang(r.code); document.getElementById("review")?.scrollIntoView({ behavior: "smooth" }); }}>
+                  <Button size="sm" variant="ghost" onClick={() => { setLang(r.code); setReviewOpen(true); setTimeout(() => document.getElementById("review")?.scrollIntoView({ behavior: "smooth" }), 50); }}>
                     Review
                   </Button>
                 </div>
@@ -245,79 +264,119 @@ export function TranslationsManager(props: {
 
       {/* ── review ─────────────────────────────────────────────────── */}
       {rows.length > 0 && current && (
-        <section id="review">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-4">
-            <h2 className="text-3xl">Review &amp; edit</h2>
-            <div className="flex gap-3">
-              <div className="w-48">
-                <NativeSelect value={lang} onChange={(e) => setLang(e.target.value)} aria-label="Language to review">
-                  {rows.map((r) => (
-                    <option key={r.code} value={r.code}>{r.native} · {r.name}</option>
-                  ))}
-                </NativeSelect>
-              </div>
-              <div className="w-44">
-                <NativeSelect value={filter} onChange={(e) => setFilter(e.target.value as "attention" | "all")} aria-label="Filter">
-                  <option value="attention">Needs attention</option>
-                  <option value="all">Everything</option>
-                </NativeSelect>
-              </div>
+        <Collapsible
+          id="review"
+          level="h2"
+          title="Review & edit"
+          meta={`${current.name} · ${visible.length} ${visible.length === 1 ? "text" : "texts"}`}
+          open={reviewOpen}
+          onOpenChange={setReviewOpen}
+          headerClassName="border-b pb-4"
+          titleClassName="text-3xl"
+        >
+          <div className="flex flex-wrap items-center gap-3 py-4">
+            <div className="relative min-w-[12rem] flex-1 sm:max-w-xs">
+              <Search className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={reviewQuery} onChange={(e) => setReviewQuery(e.target.value)} placeholder="Search texts" aria-label="Search texts" className="ps-8" />
             </div>
+            <div className="w-48">
+              <NativeSelect value={lang} onChange={(e) => setLang(e.target.value)} aria-label="Language to review">
+                {rows.map((r) => (
+                  <option key={r.code} value={r.code}>{r.native} · {r.name}</option>
+                ))}
+              </NativeSelect>
+            </div>
+            <div className="w-44">
+              <NativeSelect value={filter} onChange={(e) => setFilter(e.target.value as "attention" | "all")} aria-label="Filter">
+                <option value="attention">Needs attention</option>
+                <option value="all">Everything</option>
+              </NativeSelect>
+            </div>
+            {groups.length > 1 && (
+              <Button variant="ghost" size="sm" className="ms-auto" onClick={() => setAllGroups(openCount < groups.length)}>
+                {openCount < groups.length ? "Expand all" : "Collapse all"}
+              </Button>
+            )}
           </div>
 
-          <ul className="divide-y">
-            {visible.length === 0 && <li className="py-10 text-center text-muted-foreground">Nothing needs attention in {current.name}.</li>}
-            {visible.map((u) => {
-              const cell = u.byLang[lang];
-              const key = `${u.id}:${lang}`;
-              const value = drafts[key] ?? cell.text;
-              const changed = value.trim() !== cell.text.trim();
+          {groups.length === 0 && (
+            <p className="py-10 text-center text-muted-foreground">
+              {rq ? `No text matches “${reviewQuery.trim()}”.` : `Nothing needs attention in ${current.name}.`}
+            </p>
+          )}
+          <div className="divide-y border-y">
+            {groups.map((g, gi) => {
+              const open = groupOpen(g.key, gi);
+              const todo = g.units.filter((u) => {
+                const st = u.byLang[lang]?.state;
+                return st && st !== "fresh" && st !== "staff";
+              }).length;
               return (
-                <li key={key} className="grid gap-4 py-5 md:grid-cols-2" data-testid={`unit-${u.id}`}>
-                  <div>
-                    <p className="label-caps text-[0.6rem] text-muted-foreground">
-                      {u.group} · {u.who} · {FIELD_LABEL[u.field] ?? u.field}
-                    </p>
-                    <p className="mt-1.5 leading-relaxed">{u.source}</p>
-                  </div>
-                  <div>
-                    <div className="mb-1.5 flex items-center justify-between gap-2">
-                      <Badge state={cell.state} />
-                    </div>
-                    <Textarea
-                      value={value}
-                      dir={current.dir}
-                      lang={lang}
-                      rows={Math.min(8, Math.max(2, Math.ceil(u.source.length / 60)))}
-                      onChange={(e) => setDrafts((d) => ({ ...d, [key]: e.target.value }))}
-                      placeholder={cell.state === "missing" ? "Not translated yet — type a translation, or press Translate." : ""}
-                      aria-label={`${current.name} translation`}
-                    />
-                    <div className="mt-2 flex gap-2">
-                      <Button
-                        size="sm"
-                        disabled={pending || !changed}
-                        onClick={() =>
-                          act(
-                            () => saveTranslation(restaurantId, u.entity, u.entityId, u.field, lang, value),
-                            value.trim() ? "Saved. Your wording is now protected from machine updates." : "Cleared. It will be translated again.",
-                          )
-                        }
-                      >
-                        Save
-                      </Button>
-                      {cell.state === "staff" || cell.state === "staff_stale" ? (
-                        <Button size="sm" variant="ghost" disabled={pending} onClick={() => act(() => saveTranslation(restaurantId, u.entity, u.entityId, u.field, lang, ""), "Reverted to machine translation")}>
-                          Revert to machine
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                </li>
+                <Collapsible
+                  key={g.key}
+                  open={open}
+                  onOpenChange={(o) => setGroupChoice((c) => ({ ...c, [g.key]: o }))}
+                  title={g.title || "Untitled"}
+                  meta={`${g.kind} · ${g.units.length} ${g.units.length === 1 ? "text" : "texts"}${todo ? ` · ${todo} to check` : ""}`}
+                  headerClassName="px-1 py-3"
+                  titleClassName="font-display text-xl"
+                >
+                  <ul className="divide-y border-t">
+                    {g.units.map((u) => {
+                      const cell = u.byLang[lang];
+                      const key = `${u.id}:${lang}`;
+                      const value = drafts[key] ?? cell.text;
+                      const changed = value.trim() !== cell.text.trim();
+                      return (
+                        <li key={key} className="grid gap-4 px-1 py-5 md:grid-cols-2" data-testid={`unit-${u.id}`}>
+                          <div>
+                            <p className="label-caps text-[0.6rem] text-muted-foreground">
+                              {u.group} · {u.who} · {FIELD_LABEL[u.field] ?? u.field}
+                            </p>
+                            <p className="mt-1.5 leading-relaxed">{u.source}</p>
+                          </div>
+                          <div>
+                            <div className="mb-1.5 flex items-center justify-between gap-2">
+                              <Badge state={cell.state} />
+                            </div>
+                            <Textarea
+                              value={value}
+                              dir={current.dir}
+                              lang={lang}
+                              rows={Math.min(8, Math.max(2, Math.ceil(u.source.length / 60)))}
+                              onChange={(e) => setDrafts((d) => ({ ...d, [key]: e.target.value }))}
+                              placeholder={cell.state === "missing" ? "Not translated yet — type a translation, or press Translate." : ""}
+                              aria-label={`${current.name} translation`}
+                            />
+                            <div className="mt-2 flex gap-2">
+                              <Button
+                                size="sm"
+                                disabled={pending || !changed}
+                                onClick={() =>
+                                  act(
+                                    () => saveTranslation(restaurantId, u.entity, u.entityId, u.field, lang, value),
+                                    value.trim() ? "Saved. Your wording is now protected from machine updates." : "Cleared. It will be translated again.",
+                                  )
+                                }
+                              >
+                                Save
+                              </Button>
+                              {cell.state === "staff" || cell.state === "staff_stale" ? (
+                                <Button size="sm" variant="ghost" disabled={pending} onClick={() => act(() => saveTranslation(restaurantId, u.entity, u.entityId, u.field, lang, ""), "Reverted to machine translation")}>
+                                  Revert to machine
+                                </Button>
+                              ) : null}
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </Collapsible>
               );
             })}
-          </ul>
-        </section>
+          </div>
+        </Collapsible>
       )}
 
       <GlossaryEditor restaurantId={restaurantId} initial={props.glossary} langs={rows} pending={pending} act={act} />
@@ -376,20 +435,35 @@ function GlossaryEditor({
 }) {
   const [terms, setTerms] = useState<GlossaryTerm[]>(initial);
   const [lang, setLang] = useState(langs[0]?.code ?? "");
+  const [q, setQ] = useState("");
   const dirty = JSON.stringify(terms) !== JSON.stringify(initial);
   const patch = (i: number, p: Partial<GlossaryTerm>) => setTerms((t) => t.map((x, j) => (j === i ? { ...x, ...p } : x)));
 
+  const needle = q.trim().toLowerCase();
+  const rowsShown = terms.map((t, i) => ({ t, i })).filter(({ t }) => !needle || t.term.toLowerCase().includes(needle));
+
   return (
-    <section>
-      <div className="border-b pb-4">
-        <h2 className="text-3xl">Glossary</h2>
-        <p className="mt-2 max-w-xl text-muted-foreground">
-          Terms that must never be translated: dish styles, producers, regions. They are protected word for word in every language.
-          “Fixed” lets you choose the exact rendering for one language. Changing the glossary marks affected text as out of date.
-        </p>
-      </div>
+    <Collapsible
+      id="glossary"
+      level="h2"
+      title="Glossary"
+      meta={`${terms.length} ${terms.length === 1 ? "term" : "terms"}`}
+      defaultOpen={terms.length <= 12}
+      headerClassName="border-b pb-4"
+      titleClassName="text-3xl"
+    >
+      <p className="mt-4 max-w-xl text-muted-foreground">
+        Terms that must never be translated: dish styles, producers, regions. They are protected word for word in every language.
+        “Fixed” lets you choose the exact rendering for one language. Changing the glossary marks affected text as out of date.
+      </p>
+      {terms.length > 8 && (
+        <div className="relative mt-4 max-w-xs">
+          <Search className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search terms" aria-label="Search terms" className="ps-8" />
+        </div>
+      )}
       <ul className="mt-4 divide-y">
-        {terms.map((t, i) => (
+        {rowsShown.map(({ t, i }) => (
           <li key={i} className="grid items-center gap-3 py-3 sm:grid-cols-[1.4fr_1fr_1.4fr_auto]">
             <Input value={t.term} onChange={(e) => patch(i, { term: e.target.value })} aria-label="Term" placeholder="e.g. tagliolini" />
             <NativeSelect value={t.kind} onChange={(e) => patch(i, { kind: e.target.value as GlossaryTerm["kind"] })} aria-label="Mode">
@@ -413,9 +487,10 @@ function GlossaryEditor({
           </li>
         ))}
         {terms.length === 0 && <li className="py-6 text-sm text-muted-foreground">No terms yet.</li>}
+        {terms.length > 0 && rowsShown.length === 0 && <li className="py-6 text-sm text-muted-foreground">No term matches “{q}”.</li>}
       </ul>
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <Button variant="outline" size="sm" onClick={() => setTerms((t) => [...t, { term: "", kind: "keep" }])}>
+        <Button variant="outline" size="sm" onClick={() => { setQ(""); setTerms((t) => [...t, { term: "", kind: "keep" }]); }}>
           <Plus className="size-3.5" /> Add term
         </Button>
         {terms.some((t) => t.kind === "fixed") && langs.length > 0 && (
@@ -431,7 +506,7 @@ function GlossaryEditor({
           Save glossary
         </Button>
       </div>
-    </section>
+    </Collapsible>
   );
 }
 
@@ -515,19 +590,47 @@ function GeneratePanel({
         <span className="ms-auto text-sm text-muted-foreground" data-testid="selected-count"><b className="font-numeric text-foreground">{picked.length}</b> selected</span>
       </div>
 
-      <div className="mt-3 max-h-[26rem] overflow-y-auto border" data-testid="choices">
-        {(["supported", "experimental"] as const).map((tier) =>
-          group(tier).length ? (
-            <div key={tier}>
-              <p className="label-caps sticky top-0 z-10 border-b bg-card px-3 py-1.5 text-[0.58rem] text-muted-foreground">
-                {tier === "supported" ? "Well supported" : "Experimental: machine translated, diners see a warning"}
-              </p>
-              {group(tier).map((c) => (
-                <Row key={c.code} c={c} />
-              ))}
-            </div>
-          ) : null,
-        )}
+      <div className="mt-3 divide-y border" data-testid="choices">
+        {(["supported", "experimental"] as const).map((tier) => {
+          const items = group(tier);
+          if (!items.length) return null;
+          const all = choices.filter((c) => c.tier === tier);
+          const inGroup = all.filter((c) => selected.has(c.code)).length;
+          const setGroup = (on: boolean) =>
+            setSelected((p) => {
+              const n = new Set(p);
+              for (const c of items) {
+                if (on) n.add(c.code);
+                else n.delete(c.code);
+              }
+              return n;
+            });
+          return (
+            <Collapsible
+              key={tier}
+              id={`tier-${tier}`}
+              level="h3"
+              title={tier === "supported" ? "Well supported" : "Experimental"}
+              meta={`${all.length} languages · ${inGroup} selected${tier === "experimental" ? " · machine translated, diners see a warning" : ""}`}
+              defaultOpen={tier === "supported"}
+              forceOpen={!!needle}
+              headerClassName="bg-card px-3 py-2"
+              titleClassName="label-caps text-[0.7rem]"
+              actions={
+                <>
+                  <Button size="xs" variant="ghost" onClick={() => setGroup(true)}>{needle ? "Select shown" : "Select all"}</Button>
+                  <Button size="xs" variant="ghost" onClick={() => setGroup(false)}>{needle ? "Clear shown" : "None"}</Button>
+                </>
+              }
+            >
+              <div className="max-h-[22rem] overflow-y-auto border-t">
+                {items.map((c) => (
+                  <Row key={c.code} c={c} />
+                ))}
+              </div>
+            </Collapsible>
+          );
+        })}
         {shown.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No language matches “{q}”.</p>}
       </div>
 
@@ -554,33 +657,58 @@ function GeneratePanel({
 }
 
 function CompactTable({ rows, defaultNative, pending, onTranslate, onReview }: { rows: LangRow[]; defaultNative: string; pending: boolean; onTranslate: (code: string) => void; onReview: (code: string) => void }) {
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const matching = rows.filter((r) => !needle || r.native.toLowerCase().includes(needle) || r.name.toLowerCase().includes(needle) || r.code.toLowerCase() === needle);
+  const needsWork = (r: LangRow) => r.job?.status === "running" || r.job?.status === "failed" || r.counts.missing + r.counts.stale + r.counts.staff_stale > 0;
+  const todo = matching.filter(needsWork);
+  const done = matching.filter((r) => !needsWork(r));
+
+  const line = (r: LangRow) => {
+    const running = r.job?.status === "running";
+    const attention = r.counts.missing + r.counts.stale + r.counts.staff_stale;
+    return (
+      <div key={r.code} className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] items-center gap-4 px-4 py-2.5" data-testid={`lang-${r.code}`}>
+        <div className="min-w-0" dir={r.dir}>
+          <span className="font-display text-lg" lang={r.code}>{r.native}</span>{" "}
+          <span className="label-caps text-[0.58rem] text-muted-foreground" dir="ltr">{r.name}</span>
+          {r.tier === "experimental" && <span className="label-caps ms-2 text-[0.55rem] text-highlight" dir="ltr">experimental</span>}
+        </div>
+        <div className="min-w-0 text-xs text-muted-foreground" data-testid={`job-${r.code}`}>
+          <div className="h-1 bg-muted"><div className="h-full bg-primary" style={{ width: `${r.percent}%` }} /></div>
+          <p className="mt-1 truncate">
+            {running ? `Translating… ${r.job?.done}/${r.job?.total}` : `${r.percent}%${attention ? ` · ${attention} to do` : ""}${r.job?.failed ? ` · ${r.job.failed} left in ${defaultNative}` : ""}${r.job?.status === "failed" && r.job.error ? ` · ${r.job.error.slice(0, 60)}` : ""}`}
+          </p>
+        </div>
+        <div className="flex gap-1">
+          <Button size="xs" variant="outline" disabled={pending || running || attention === 0} onClick={() => onTranslate(r.code)}>
+            {attention === 0 ? "Done" : "Translate"}
+          </Button>
+          <Button size="xs" variant="ghost" onClick={() => onReview(r.code)}>Review</Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="mt-4 divide-y border" data-testid="lang-table">
-      {rows.map((r) => {
-        const running = r.job?.status === "running";
-        const attention = r.counts.missing + r.counts.stale + r.counts.staff_stale;
-        return (
-          <div key={r.code} className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] items-center gap-4 px-4 py-2.5" data-testid={`lang-${r.code}`}>
-            <div className="min-w-0" dir={r.dir}>
-              <span className="font-display text-lg" lang={r.code}>{r.native}</span>{" "}
-              <span className="label-caps text-[0.58rem] text-muted-foreground" dir="ltr">{r.name}</span>
-              {r.tier === "experimental" && <span className="label-caps ms-2 text-[0.55rem] text-highlight" dir="ltr">experimental</span>}
-            </div>
-            <div className="min-w-0 text-xs text-muted-foreground" data-testid={`job-${r.code}`}>
-              <div className="h-1 bg-muted"><div className="h-full bg-primary" style={{ width: `${r.percent}%` }} /></div>
-              <p className="mt-1 truncate">
-                {running ? `Translating… ${r.job?.done}/${r.job?.total}` : `${r.percent}%${attention ? ` · ${attention} to do` : ""}${r.job?.failed ? ` · ${r.job.failed} left in ${defaultNative}` : ""}${r.job?.status === "failed" && r.job.error ? ` · ${r.job.error.slice(0, 60)}` : ""}`}
-              </p>
-            </div>
-            <div className="flex gap-1">
-              <Button size="xs" variant="outline" disabled={pending || running || attention === 0} onClick={() => onTranslate(r.code)}>
-                {attention === 0 ? "Done" : "Translate"}
-              </Button>
-              <Button size="xs" variant="ghost" onClick={() => onReview(r.code)}>Review</Button>
-            </div>
-          </div>
-        );
-      })}
+    <div className="mt-4" data-testid="lang-table">
+      <div className="relative mb-3 max-w-xs">
+        <Search className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search offered languages" aria-label="Search offered languages" className="ps-8" />
+      </div>
+      <div className="divide-y border">
+        {todo.length > 0 && (
+          <Collapsible level="h3" title="Needs translating" meta={`${todo.length} ${todo.length === 1 ? "language" : "languages"}`} defaultOpen forceOpen={!!needle} headerClassName="bg-card px-4 py-2" titleClassName="label-caps text-[0.7rem]">
+            <div className="divide-y border-t">{todo.map(line)}</div>
+          </Collapsible>
+        )}
+        {done.length > 0 && (
+          <Collapsible level="h3" title="Complete" meta={`${done.length} ${done.length === 1 ? "language" : "languages"}`} defaultOpen={todo.length === 0} forceOpen={!!needle} headerClassName="bg-card px-4 py-2" titleClassName="label-caps text-[0.7rem]">
+            <div className="divide-y border-t">{done.map(line)}</div>
+          </Collapsible>
+        )}
+        {matching.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No language matches “{q}”.</p>}
+      </div>
     </div>
   );
 }

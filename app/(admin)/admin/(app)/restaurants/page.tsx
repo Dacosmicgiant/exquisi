@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { RestaurantCard } from "@/components/admin/RestaurantCard";
+import { RestaurantList } from "@/components/admin/RestaurantList";
 import { Button } from "@/components/ui/button";
 import { restaurants } from "@/lib/db/platform";
 
@@ -23,11 +23,7 @@ export default async function RestaurantsPage() {
       {all.length === 0 ? (
         <p className="border border-dashed p-10 text-center text-muted-foreground">No restaurants yet.</p>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {all.map((r) => (
-            <RestaurantCard key={r.id} r={r} />
-          ))}
-        </div>
+        <RestaurantList restaurants={all} />
       )}
     </>
   );
