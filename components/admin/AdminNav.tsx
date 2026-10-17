@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Palette, Store } from "lucide-react";
+import { LayoutDashboard, Palette, Store, SwatchBook } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/restaurants", label: "Restaurants", icon: Store },
-  { href: "/admin/theme", label: "Theme", icon: Palette },
+  { href: "/admin/themes", label: "Themes", icon: SwatchBook },
+  { href: "/admin/theme", label: "House style", icon: Palette },
 ];
 
 export function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
@@ -16,7 +17,7 @@ export function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-0.5">
       {ITEMS.map(({ href, label, icon: Icon, exact }) => {
-        const active = exact ? pathname === href : pathname.startsWith(href);
+        const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
             key={href}

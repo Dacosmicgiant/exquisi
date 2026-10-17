@@ -6,12 +6,13 @@
  */
 import { Types } from "mongoose";
 import { connectDb } from "./connect";
-import { QrCodeModel, RestaurantModel, SettingModel, UserModel } from "./models";
+import { CustomThemeModel, QrCodeModel, RestaurantModel, SettingModel, UserModel } from "./models";
 import { plain, plainList } from "./serialize";
 import {
   ConflictError,
   NotFoundError,
   TenantError,
+  type CustomTheme,
   type Restaurant,
   type RestaurantInput,
   type RestaurantStatus,
@@ -63,6 +64,11 @@ export const restaurants = {
       throw e;
     }
   },
+  /** Restaurants whose brand starts from this theme ("preset:x" / "custom:x"). */
+  async usingTheme(themeId: string): Promise<Restaurant[]> {
+    await connectDb();
+    return plainList<Restaurant>(await RestaurantModel.find({ "brand.theme_id": themeId }).lean());
+  },
   async setStatus(id: string, status: RestaurantStatus): Promise<void> {
     await connectDb();
     await RestaurantModel.updateOne({ _id: id }, { $set: { status } });
@@ -100,6 +106,39 @@ export const settings = {
   async setThemeOverrides(value: unknown): Promise<void> {
     await connectDb();
     await SettingModel.updateOne({ key: "theme" }, { $set: { value } }, { upsert: true });
+  },
+};
+
+export type CustomThemeInput = { name: string; category: string; theme: unknown };
+
+/** Staff-made themes, shared by every restaurant (platform data, not tenant data). */
+export const customThemes = {
+  async list(): Promise<CustomTheme[]> {
+    await connectDb();
+    return plainList<CustomTheme>(await CustomThemeModel.find({}).sort({ created_at: -1 }).lean());
+  },
+  async get(id: string): Promise<CustomTheme | null> {
+    await connectDb();
+    if (!Types.ObjectId.isValid(id)) return null;
+    const doc = await CustomThemeModel.findById(id).lean();
+    return doc ? plain<CustomTheme>(doc) : null;
+  },
+  async create(input: CustomThemeInput): Promise<CustomTheme> {
+    await connectDb();
+    const doc = await CustomThemeModel.create(input);
+    return plain<CustomTheme>(doc.toObject());
+  },
+  async update(id: string, patch: Partial<CustomThemeInput>): Promise<CustomTheme> {
+    await connectDb();
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundError("Theme not found");
+    const doc = await CustomThemeModel.findByIdAndUpdate(id, { $set: patch }, { returnDocument: "after", runValidators: true }).lean();
+    if (!doc) throw new NotFoundError("Theme not found");
+    return plain<CustomTheme>(doc);
+  },
+  async remove(id: string): Promise<void> {
+    await connectDb();
+    if (!Types.ObjectId.isValid(id)) return;
+    await CustomThemeModel.deleteOne({ _id: id });
   },
 };
 

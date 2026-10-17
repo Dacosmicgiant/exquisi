@@ -28,12 +28,24 @@ export type DietaryKey = (typeof DIETARY_KEYS)[number];
 
 export type Brand = {
   logo?: ImageRef | null;
+  /** The theme this restaurant starts from: "preset:<id>" (lib/theme/presets.ts) or "custom:<id>" (a saved custom theme). Empty = the house style. */
+  theme_id?: string;
   /** Partial colour overrides per mode, layered over the platform theme. */
   colors?: { light?: Partial<ColorSet>; dark?: Partial<ColorSet> };
   /** At most two fonts (keys from lib/theme/fonts.ts). */
   fonts?: { display?: string; body?: string };
   /** Everything else (radius, ornaments, mode, density, …). */
   theme?: Omit<ThemeOverrides, "colors" | "fonts">;
+};
+
+/** A named theme saved by staff; `theme` is a complete Theme (see lib/theme/schema.ts). */
+export type CustomTheme = {
+  id: string;
+  name: string;
+  category: string;
+  theme: unknown;
+  created_at: string;
+  updated_at: string;
 };
 
 export type RestaurantStatus = "draft" | "live" | "archived";

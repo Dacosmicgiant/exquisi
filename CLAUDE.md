@@ -97,7 +97,16 @@ restaurant). Session id lives in sessionStorage; no cookies, no personal data. D
 ## Theme: one file
 `theme/theme.config.ts` is the single source of truth (light + dark palettes, fonts, type, radius,
 density, shadows, motion, ornaments). Resolution: `theme.config.ts` < platform overrides (DB,
-`/admin/theme`) < restaurant brand (`restaurants.brand`). Pure logic is in `lib/theme/*`
+`/admin/theme`, shown as "House style") < the restaurant's chosen theme (`brand.theme_id`, `"preset:<id>"` or
+`"custom:<id>"`) < the restaurant's own tweaks (`restaurants.brand` colours/fonts/theme). **Themes library:** 25
+code presets in `lib/theme/presets.ts` (name + category: fine dining, trattoria & bistro, café, bakery & dessert,
+bar & lounge, seafood & coastal, casual & street food, modern & minimal), built with `buildColors`
+(`lib/theme/palette.ts`, keeps text readable; `tests/theme.presets.test.ts` enforces contrast, fonts and validity).
+Staff can save unlimited named **custom themes** (platform collection `custom_themes`, `customThemes` in
+`lib/db/platform.ts`; always stored as a complete Theme) at `/admin/themes`, or from any restaurant's Brand tab
+("Save as custom theme"). A restaurant stores only the reference plus its diff, so editing a custom theme rebuilds
+every menu using it (`revalidateThemeUsers`); a custom theme in use cannot be deleted. Fonts live in
+`lib/theme/fonts.ts` (19 self-hosted variable fonts; add one = install `@fontsource-variable/x`, add to the catalog and `scripts/copy-fonts.ts`, `npm run fonts`). Pure logic is in `lib/theme/*`
 (`resolve` validates section-by-section so bad data falls back instead of breaking pages;
 `css` emits CSS variables + at most **two** `@font-face` rules, `font-display: swap`). Tailwind
 and shadcn tokens map to those variables in `app/globals.css`; never hard-code colours or fonts.

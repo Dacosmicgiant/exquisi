@@ -128,6 +128,11 @@ export function ThemeEditor({
   onSave,
   baseLabel,
   children,
+  dirtyExtra = false,
+  saveDisabled = false,
+  saveLabel = "Save theme",
+  savedMessage = "Saved. Menus are rebuilding.",
+  extraActions,
 }: {
   /** Resolved theme of the layer below (theme.config.ts for the platform; the platform theme for a restaurant). */
   base: Theme;
@@ -136,6 +141,13 @@ export function ThemeEditor({
   onSave: Save;
   baseLabel: string;
   children?: React.ReactNode;
+  /** something outside the editor changed (e.g. the chosen theme), so Save should be enabled */
+  dirtyExtra?: boolean;
+  saveDisabled?: boolean;
+  saveLabel?: string;
+  savedMessage?: string;
+  /** extra buttons in the sticky bar, given the working theme */
+  extraActions?: (working: Theme) => React.ReactNode;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -144,7 +156,7 @@ export function ThemeEditor({
   const [confirmReset, setConfirmReset] = useState(false);
 
   const diff = useMemo(() => diffTheme(base, t), [base, t]);
-  const dirty = JSON.stringify(diffTheme(base, initial)) !== JSON.stringify(diff);
+  const dirty = dirtyExtra || JSON.stringify(diffTheme(base, initial)) !== JSON.stringify(diff);
 
   const setColor = (mode: "light" | "dark", token: ColorToken, v: string) =>
     setT((p) => ({ ...p, colors: { ...p.colors, [mode]: { ...p.colors[mode], [token]: v } } }));
@@ -304,9 +316,10 @@ export function ThemeEditor({
         </section>
 
         <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t bg-background/95 px-4 py-4 backdrop-blur sm:mx-0 sm:px-0">
-          <Button size="lg" className="label-caps" disabled={pending || !dirty} onClick={() => save(diff, "Saved. Menus are rebuilding.")}>
-            {pending ? "Saving…" : "Save theme"}
+          <Button size="lg" className="label-caps" disabled={pending || !dirty || saveDisabled} onClick={() => save(diff, savedMessage)}>
+            {pending ? "Saving…" : saveLabel}
           </Button>
+          {extraActions?.(t)}
           <Button variant="ghost" onClick={() => setT(base)} disabled={pending}>
             Reset to {baseLabel}
           </Button>

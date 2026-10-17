@@ -27,3 +27,8 @@ export async function revalidatePlatformTheme() {
   revalidatePath("/");
   for (const r of await restaurants.list({ includeArchived: true })) await revalidateMenu(r.id);
 }
+
+/** A shared theme (custom) changed: rebuild the menus of every restaurant that starts from it. */
+export async function revalidateThemeUsers(themeRef: string) {
+  for (const r of await restaurants.usingTheme(themeRef)) await revalidateMenu(r.id);
+}

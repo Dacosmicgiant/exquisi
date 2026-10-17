@@ -40,6 +40,7 @@ export type RestaurantFormValues = z.infer<typeof restaurantSchema>;
 
 export const brandSchema = z.object({
   logo: imageRefSchema.nullable().optional(),
+  theme_id: z.string().max(80).optional(),
   colors: z.object({ light: z.record(z.string(), z.string()).optional(), dark: z.record(z.string(), z.string()).optional() }).optional(),
   fonts: z.object({ display: z.enum(FONT_KEYS).optional(), body: z.enum(FONT_KEYS).optional() }).optional(),
   theme: z.record(z.string(), z.unknown()).optional(),

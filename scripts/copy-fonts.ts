@@ -18,6 +18,17 @@ const fonts = [
   "inter",
   "libre-franklin",
   "manrope",
+  "lora",
+  "bodoni-moda",
+  "cinzel",
+  "crimson-pro",
+  "dm-sans",
+  "outfit",
+  "space-grotesk",
+  "montserrat",
+  "oswald",
+  "nunito",
+  "josefin-sans",
 ];
 
 let missing = 0;

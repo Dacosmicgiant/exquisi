@@ -131,6 +131,16 @@ const settingSchema = new Schema<AnyDoc>(
   { timestamps: true, minimize: false },
 );
 
+const customThemeSchema = new Schema<AnyDoc>(
+  {
+    name: { type: String, required: true, trim: true, maxlength: 60 },
+    category: { type: String, required: true },
+    /** a complete Theme (validated with sanitizeOverrides on write and on read) */
+    theme: { type: M, default: {} },
+  },
+  { timestamps: { createdAt: "created_at", updatedAt: "updated_at" }, minimize: false },
+);
+
 const reg = (name: string, schema: Schema<AnyDoc>, collection: string): Model<AnyDoc> =>
   (models[name] as Model<AnyDoc> | undefined) ?? model<AnyDoc>(name, schema, collection);
 
@@ -141,4 +151,5 @@ export const QrCodeModel = reg("QrCode", qrSchema, "qr_codes");
 export const EventModel = reg("Event", eventSchema, "events");
 export const JobModel = reg("TranslationJob", jobSchema, "translation_jobs");
 export const UserModel = reg("User", userSchema, "users");
+export const CustomThemeModel = reg("CustomTheme", customThemeSchema, "custom_themes");
 export const SettingModel = reg("PlatformSetting", settingSchema, "platform_settings");
