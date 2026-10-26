@@ -45,3 +45,15 @@ describe("regional variants", () => {
     expect(getVocab("tt").fallback).toBe(true); // no labels written yet: English, never machine translated
   });
 });
+
+describe("menu prompt", () => {
+  it("has a hand-written prompt in every vocabulary language, English exactly as asked", () => {
+    expect(getVocab("en").ui.prompt).toBe("What's on your mind?");
+    for (const code of vocabLanguages()) {
+      const p = getVocab(code).ui.prompt;
+      expect(p.trim().length, code).toBeGreaterThan(3);
+      // other languages are not the English sentence copied across
+      if (code !== "en") expect(p, code).not.toBe(getVocab("en").ui.prompt);
+    }
+  });
+});

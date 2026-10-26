@@ -67,13 +67,18 @@ check("phone language (Hindi) is suggested first", suggested === `/m/${SLUG}/hi`
 check("native name in large type", (await p.locator("[aria-label='Suggested for you'] a").first().innerText()).includes("हिन्दी"));
 await p.locator("[aria-label='Suggested for you'] a").first().click();
 await p.waitForURL(`${BASE}/m/${SLUG}/hi`);
-await p.waitForSelector("h3");
+// categories start folded ("What's on your mind?" + a list of headings): the dishes appear when one is opened
+check("menu opens on folded categories", (await p.locator("details.cat[open]").count()) === 0 && (await p.locator(".prompt").count()) === 1);
+await p.locator("details.cat > summary").first().click();
+await p.waitForSelector("details.cat[open] h3");
 check("menu is rendered in Hindi", (await p.evaluate(() => document.documentElement.lang)) === "hi");
-const names = await p.locator("h3").allInnerTexts();
+const names = await p.evaluate(() => [...document.querySelectorAll("h3")].map((h) => h.textContent.trim()));
 check("original dish names are always shown", names.includes("Burrata di Andria") && names.includes("Tagliolini al Tartufo Bianco"));
 check("allergens come from the fixed vocabulary", (await p.locator("ul[aria-label] li").allInnerTexts()).some((t) => t.includes("दूध")));
 check("machine-translation notice shown", (await p.locator("aside[role=note]").count()) === 1);
-await p.locator("details.story summary").first().click();
+// open the category that holds the first dish story, then the story itself
+await p.evaluate(() => { const d = document.querySelector("details.story")?.closest("details.cat"); if (d) d.open = true; });
+await p.locator("details.cat[open] details.story summary").first().click();
 await p.waitForTimeout(600);
 await p.goto(`${BASE}/r/${before.code}`);
 check("returning diner skips the language screen", new URL(p.url()).pathname === `/m/${SLUG}/hi`, p.url());
@@ -111,7 +116,8 @@ await speechCtx.addInitScript(() => {
 });
 const sp = await speechCtx.newPage();
 await sp.goto(`${BASE}/m/${SLUG}/hi`);
-await sp.waitForSelector("h3");
+await sp.locator("details.cat > summary").first().click();
+await sp.waitForSelector("details.cat[open] h3");
 await sp.waitForSelector("h3 button[data-speak]:not([hidden])", { timeout: 5000 }).catch(() => {});
 check("speaker buttons appear when the device has a voice", (await sp.locator("button[data-speak]:not([hidden])").count()) > 0);
 await sp.locator("h3 button[data-speak]:not([hidden])").first().click();
@@ -122,7 +128,8 @@ const quiet = await browser.newContext({ viewport: { width: 390, height: 844 } }
 await quiet.addInitScript(() => Object.defineProperty(window, "speechSynthesis", { configurable: true, value: undefined }));
 const qp = await quiet.newPage();
 await qp.goto(`${BASE}/m/${SLUG}/hi`);
-await qp.waitForSelector("h3");
+await qp.locator("details.cat > summary").first().click();
+await qp.waitForSelector("details.cat[open] h3");
 await qp.waitForTimeout(800);
 check("no speaker buttons on a device without speech", (await qp.locator("button[data-speak]:not([hidden])").count()) === 0);
 

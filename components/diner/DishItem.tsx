@@ -17,14 +17,12 @@ export function DishItem({
   restaurant,
   story,
   lang,
-  priority,
   fx = null,
 }: {
   dish: Dish;
   restaurant: Restaurant;
   story?: Story;
   lang: string;
-  priority?: boolean;
   /** approximate price in the diner's home currency, when the restaurant shows one */
   fx?: Fx | null;
 }) {
@@ -44,12 +42,18 @@ export function DishItem({
   const dietary = dish.dietary.filter((k) => k in v.dietary) as (keyof typeof v.dietary)[];
 
   return (
-    <li className="py-7">
-      <div className="flex items-start gap-5">
+    <li className={`dish-card${dish.image ? "" : " no-photo"}`}>
+      {dish.image && (
+        <div className="photo">
+          {/* 4:3, cropped around the subject; nothing is visible on load (categories start folded), so nothing is preloaded */}
+          <MediaImage image={dish.image} alt="" width={640} height={480} sizes="(min-width: 640px) 320px, 100vw" />
+        </div>
+      )}
+      <div className="card-body">
         <div className="min-w-0 flex-1">
           {/* original name is ALWAYS shown, in the source language */}
           <div className="leader">
-            <h3 className="text-[1.45rem] leading-tight" lang={def} dir={getLanguage(def).dir}>
+            <h3 className="text-[1.3rem] leading-tight" lang={def} dir={getLanguage(def).dir}>
               {original}
               <SpeakButton text={original} lang={nameLang} label={listen} />
             </h3>
@@ -125,12 +129,6 @@ export function DishItem({
             </details>
           )}
         </div>
-
-        {dish.image && (
-          <div className="shrink-0 overflow-hidden border border-border/80 shadow-soft">
-            <MediaImage image={dish.image} alt="" width={176} height={176} sizes="88px" priority={priority} className="size-[88px] object-cover sm:size-[104px]" />
-          </div>
-        )}
       </div>
     </li>
   );

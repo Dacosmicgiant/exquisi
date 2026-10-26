@@ -9,6 +9,7 @@ import { toRoman } from "@/lib/roman";
 import { Flag } from "@/components/diner/Flag";
 import { AnalyticsBeacon } from "@/components/diner/AnalyticsBeacon";
 import { SpeakScript } from "@/components/diner/Speak";
+import { CategoryScript } from "@/components/diner/CategoryScript";
 import type { Fx } from "@/lib/currency/rates";
 import { FX_ATTRIBUTION } from "@/lib/currency/attribution";
 
@@ -25,7 +26,6 @@ export function MenuView({ data, lang, changeLanguageHref, numerals = true, anal
   const experimental = translated && L.tier === "experimental";
   const rName = shown(restaurant.name, restaurant.tx, "name", lang, def);
 
-  let imageCount = 0;
   const sections = categories
     .map((c) => ({ c, items: dishes.filter((d) => d.category === c.key) }))
     .filter((s) => s.items.length > 0);
@@ -65,33 +65,40 @@ export function MenuView({ data, lang, changeLanguageHref, numerals = true, anal
 
       <main className="mx-auto max-w-2xl px-6 pb-16">
         {sections.length === 0 && <p className="py-16 text-center text-muted-foreground">—</p>}
-        {sections.map(({ c, items }, i) => {
-          const cName = shown(c.name, c.tx, "name", lang, def);
-          const original = c.name[def] ?? cName.text;
-          return (
-            <section key={c.key} className="rise mt-12 first:mt-0" style={{ animationDelay: `${Math.min(i, 5) * 70}ms` }} aria-labelledby={`c-${c.key}`}>
-              <div className="flex items-baseline gap-4">
-                {numerals && <span className="font-display text-xl text-ornament" dir="ltr">{toRoman(i + 1)}.</span>}
-                <div className="min-w-0">
-                  <h2 id={`c-${c.key}`} className="text-[1.9rem] leading-tight" lang={def} dir={getLanguage(def).dir}>
-                    {original}
-                  </h2>
-                  {translated && cName.lang === lang && cName.text !== original && (
-                    <p className="text-sm text-muted-foreground italic">{cName.text}</p>
-                  )}
-                </div>
-              </div>
-              <div className="mt-3 rule-double" />
-              <ul className="divide-y divide-border/70">
-                {items.map((d) => {
-                  const priority = !!d.image && imageCount++ < 2;
-                  const story = d.story_ids.map((id) => stories[id]).find(Boolean);
-                  return <DishItem key={d.id} dish={d} restaurant={restaurant} story={story} lang={lang} priority={priority} fx={fx} />;
-                })}
-              </ul>
-            </section>
-          );
-        })}
+        {sections.length > 0 && (
+          <>
+            <p className="prompt mb-8">{v.ui.prompt}</p>
+            {/* categories start folded so the first screen is a short list of headings; opening one closes the others */}
+            <div className="cats">
+              {sections.map(({ c, items }, i) => {
+                const cName = shown(c.name, c.tx, "name", lang, def);
+                const original = c.name[def] ?? cName.text;
+                return (
+                  <details key={c.key} id={`cat-${c.key}`} name="menu-category" className="cat rise" open={sections.length === 1} style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}>
+                    <summary>
+                      {numerals && <span className="font-display min-w-[2.9rem] text-xl text-ornament" dir="ltr">{toRoman(i + 1)}.</span>}
+                      <span className="min-w-0">
+                        <h2 id={`c-${c.key}`} className="text-[1.7rem] leading-tight" lang={def} dir={getLanguage(def).dir}>
+                          {original}
+                        </h2>
+                        {translated && cName.lang === lang && cName.text !== original && (
+                          <span className="block text-sm text-muted-foreground italic">{cName.text}</span>
+                        )}
+                      </span>
+                      <span className="cat-count font-numeric" dir="ltr" aria-label={String(items.length)}>{items.length}</span>
+                    </summary>
+                    <ul className="cards" aria-labelledby={`c-${c.key}`}>
+                      {items.map((d) => {
+                        const story = d.story_ids.map((id) => stories[id]).find(Boolean);
+                        return <DishItem key={d.id} dish={d} restaurant={restaurant} story={story} lang={lang} fx={fx} />;
+                      })}
+                    </ul>
+                  </details>
+                );
+              })}
+            </div>
+          </>
+        )}
       </main>
 
       <footer className="mx-auto max-w-2xl px-6 pb-16 text-center">
@@ -106,6 +113,7 @@ export function MenuView({ data, lang, changeLanguageHref, numerals = true, anal
         )}
       </footer>
       <SpeakScript />
+      <CategoryScript />
       {analytics && <AnalyticsBeacon slug={restaurant.slug} lang={lang} />}
     </div>
   );

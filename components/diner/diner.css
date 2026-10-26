@@ -77,6 +77,67 @@ details.story .body { border-inline-start: 1px solid var(--ornament); padding-in
 .speak:hover, .speak:focus-visible { background: var(--accent); outline: none; }
 .speak[data-speaking] { background: var(--ornament); color: var(--background); }
 
+/* "What's on your mind?" */
+.prompt { text-align: center; font-family: var(--font-display), Georgia, serif; font-style: italic; font-size: 1.55rem; line-height: 1.25; color: var(--foreground); }
+
+/* categories fold into single hairline rows; one opens at a time (native <details name>, no JS needed) */
+.cats { border-top: 1px solid var(--ornament); }
+.cat { border-bottom: 1px solid color-mix(in oklab, var(--ornament) 55%, transparent); }
+.cat > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 0.25rem;
+  transition: background var(--motion-duration) var(--motion-ease);
+}
+.cat > summary::-webkit-details-marker { display: none; }
+.cat > summary:hover { background: color-mix(in oklab, var(--accent) 55%, transparent); }
+.cat > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.cat > summary::after {
+  content: "";
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-inline-start: auto;
+  margin-inline-end: 0.35rem;
+  border-inline-end: 1.5px solid var(--ornament);
+  border-bottom: 1.5px solid var(--ornament);
+  transform: rotate(45deg);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.cat[open] > summary::after { transform: rotate(-135deg); }
+.cat-count {
+  flex: none;
+  min-width: 1.6rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid color-mix(in oklab, var(--ornament) 55%, transparent);
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.cat { scroll-margin-top: 0.75rem; }
+
+/* dishes as cards, photo on top */
+.cards { display: grid; grid-template-columns: 1fr; gap: 1.25rem; padding: 0.25rem 0 2.25rem; list-style: none; margin: 0; }
+@media (min-width: 640px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; } }
+.dish-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid color-mix(in oklab, var(--border) 85%, var(--foreground));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+.dish-card .photo { aspect-ratio: 4 / 3; overflow: hidden; border-bottom: 1px solid color-mix(in oklab, var(--ornament) 50%, transparent); background: var(--muted); }
+.dish-card .photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* no photo: a double brass rule stands in for it */
+.dish-card.no-photo { border-top: 3px double var(--ornament); }
+.dish-card .card-body { display: flex; flex-direction: column; flex: 1; padding: 1.1rem 1.2rem 1.3rem; }
+
 /* gentle entrance, CSS only */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .rise { animation: rise var(--motion-duration, 600ms) var(--motion-ease, ease-out) both; }

@@ -51,6 +51,11 @@ Cloudinary is for images only.
      passes `validateUnit` (script, digits, glossary, echo; names may legitimately come back unchanged).
    - Experimental-tier output carries a visible "Machine translated, may be inaccurate" note and can
      be switched off per restaurant (`allow_experimental`).
+3a. **Diner menu layout.** `/m/{slug}/{lang}` opens on "What's on your mind?" (`ui.prompt`, hand-written per language) and a
+   list of category rows only; each category is a native `<details name="menu-category">` (one open at a time, no JS needed;
+   `CategoryScript` just scrolls the opened one to the top and honours `#cat-<key>`), and dishes inside are cards with the
+   photo on top (4:3, `.dish-card`, `diner.css`). Photos inside folded categories are not fetched until opened, so nothing is
+   preloaded. A one-category menu starts open. Dish photos: landscape 4:3, 1200×900 or more.
 3. **Server components by default.** Never mark a page `"use client"`. The only client island on
    diner pages is `LanguagePicker` (suggested language, search, `ms-lang` cookie, `menu_view` beacon).
    The written dish story is a plain `<details>`. (If films return: a lazy `StoryPlayer` island.) Mutations are Server Actions

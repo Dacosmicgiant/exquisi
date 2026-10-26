@@ -119,7 +119,7 @@ function DishForm({
 
       <DialogBody>
         <FormSection title="The dish">
-          <div className="grid gap-5 sm:grid-cols-[1fr_8.5rem]">
+          <div className="grid gap-5 sm:grid-cols-[1fr_10rem]">
             <div className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="dish-name" className="label-caps">Name <span className="text-highlight">*</span></Label>
@@ -147,9 +147,9 @@ function DishForm({
 
             <div className="space-y-2">
               <Label className="label-caps">Photo</Label>
-              <div className="grid aspect-square w-full max-w-[8.5rem] place-items-center overflow-hidden border bg-muted/40">
+              <div className="grid aspect-[4/3] w-full max-w-[10rem] place-items-center overflow-hidden border bg-muted/40">
                 {v.image ? (
-                  <MediaImage image={v.image} alt="" width={272} height={272} sizes="136px" className="size-full object-cover" />
+                  <MediaImage image={v.image} alt="" width={320} height={240} sizes="160px" className="size-full object-cover" />
                 ) : (
                   <ImagePlus className="size-7 text-muted-foreground" />
                 )}
@@ -168,6 +168,7 @@ function DishForm({
                   </Button>
                 )}
               </div>
+              <p className="text-xs text-muted-foreground">Shown 4:3 on the menu. Landscape works best, at least 1200 × 900 px.</p>
             </div>
           </div>
 
