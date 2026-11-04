@@ -10,6 +10,7 @@ import { Flag } from "@/components/diner/Flag";
 import { AnalyticsBeacon } from "@/components/diner/AnalyticsBeacon";
 import { SpeakScript } from "@/components/diner/Speak";
 import { CategoryScript } from "@/components/diner/CategoryScript";
+import { StoryVideoScript } from "@/components/diner/StoryVideo";
 import type { Fx } from "@/lib/currency/rates";
 import { FX_ATTRIBUTION } from "@/lib/currency/attribution";
 
@@ -114,6 +115,7 @@ export function MenuView({ data, lang, changeLanguageHref, numerals = true, anal
       </footer>
       <SpeakScript />
       <CategoryScript />
+      {dishes.some((d) => d.story_ids.some((id) => stories[id]?.youtube_id)) && <StoryVideoScript />}
       {analytics && <AnalyticsBeacon slug={restaurant.slug} lang={lang} />}
     </div>
   );

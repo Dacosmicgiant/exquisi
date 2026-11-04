@@ -107,6 +107,8 @@ export type Story = {
   source: "produced_by_us";
   title: LangMap;
   video: VideoRef | null;
+  /** A YouTube video id (an unlisted link pasted by staff) played from the story on the menu. */
+  youtube_id?: string | null;
   poster: ImageRef | null;
   /** The written dish story (shown on the menu). Name kept from the original schema. */
   text_fallback: LangMap;

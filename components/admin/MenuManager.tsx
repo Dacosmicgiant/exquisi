@@ -12,7 +12,7 @@ import { MenuImportDialog } from "@/components/admin/MenuImportDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import type { Category, Dish, Restaurant } from "@/lib/db/types";
+import type { Category, Dish, Restaurant, Story } from "@/lib/db/types";
 import { resolveText, type LangMap } from "@/lib/i18n";
 import { MediaImage } from "@/lib/media/MediaImage";
 import { formatPrice } from "@/lib/money";
@@ -52,10 +52,12 @@ export function MenuManager({
   restaurant,
   categories,
   dishes,
+  stories,
 }: {
   restaurant: Restaurant;
   categories: Category[];
   dishes: Dish[];
+  stories: Story[];
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -74,6 +76,12 @@ export function MenuManager({
   const folded = useCollapsed();
   const [active, setActive] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+
+  // the written story shown under a dish is its first linked story
+  const storyOf = (d: Dish) => stories.find((s) => s.id === d.story_ids[0]) ?? null;
+  const editing = dishDialog.dish;
+  const editingStory = editing ? storyOf(editing) : null;
+  const storySharedWith = editingStory ? dishes.filter((d) => d.id !== editing?.id && d.story_ids.includes(editingStory.id)).length : 0;
 
   const byCategory = useMemo(() => {
     const m = new Map<string, Dish[]>();
@@ -304,6 +312,8 @@ export function MenuManager({
                           {d.dietary.includes("vegan") ? <Tag>Vegan</Tag> : d.dietary.includes("vegetarian") ? <Tag>Vegetarian</Tag> : null}
                           {d.spice_level > 0 && <Tag>{["", "Mild", "Medium", "Hot"][Math.min(3, d.spice_level)]}</Tag>}
                           {d.allergens.length > 0 && <Tag>{d.allergens.length} allergen{d.allergens.length === 1 ? "" : "s"}</Tag>}
+                          {storyOf(d) && <Tag>Story</Tag>}
+                          {storyOf(d)?.youtube_id && <Tag>Video</Tag>}
                           {!d.available && <Tag warn>Hidden</Tag>}
                         </span>
                       </button>
@@ -383,9 +393,11 @@ export function MenuManager({
           defaultCategory={dishDialog.category}
           resetKey={dishKey}
           pending={pending}
-          onSubmit={(values: DishFormValues, { another }) =>
+          story={editingStory}
+          storySharedWith={storySharedWith}
+          onSubmit={(values: DishFormValues, { another, story }) =>
             act(
-              () => (dishDialog.dish ? updateDish(rid, dishDialog.dish.id, values) : createDish(rid, values)),
+              () => (dishDialog.dish ? updateDish(rid, dishDialog.dish.id, values, story) : createDish(rid, values, story)),
               dishDialog.dish ? "Dish saved" : "Dish added",
               () => {
                 if (another && !dishDialog.dish) {

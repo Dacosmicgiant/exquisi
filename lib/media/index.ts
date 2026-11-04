@@ -15,6 +15,7 @@ import type { ImageOpts, UploadKind, UploadSignature, VideoSources } from "./typ
 import { buildHlsUrl, buildImageUrl, buildMp4Url, buildRawUrl, buildVideoFrameUrl } from "./urls";
 
 export type { ImageOpts, UploadKind, UploadSignature, VideoSources } from "./types";
+export { isYouTubeId, parseYouTubeUrl, youtubeEmbedUrl, youtubePosterUrl, youtubeShortUrl, youtubeWatchUrl } from "./youtube";
 
 export function imageUrl(ref: ImageRef | null | undefined, opts: ImageOpts = {}): string | null {
   if (!ref?.public_id) return null;

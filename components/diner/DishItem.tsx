@@ -6,6 +6,7 @@ import { MediaImage } from "@/lib/media/MediaImage";
 import { getVocab } from "@/lib/i18n/vocab";
 import { shown, type Shown } from "@/lib/menu/text";
 import { SpeakButton } from "@/components/diner/Speak";
+import { StoryVideo } from "@/components/diner/StoryVideo";
 
 /** A span that declares its own language when it had to fall back to the source text. */
 function T({ s, pageLang }: { s: Shown; pageLang: string }) {
@@ -38,6 +39,7 @@ export function DishItem({
   // dish names are pronounced in the language they are written in (an English menu of Italian dishes → Italian voice)
   const nameLang = restaurant.dish_name_language || def;
   const listen = v.ui.listen;
+  const video = story?.youtube_id ?? null;
   const hot = dish.spice_level > 0 ? v.spice[Math.min(3, dish.spice_level) - 1] : null;
   const dietary = dish.dietary.filter((k) => k in v.dietary) as (keyof typeof v.dietary)[];
 
@@ -112,19 +114,22 @@ export function DishItem({
             </ul>
           )}
 
-          {story && sBody?.text && (
+          {story && (sBody?.text || video) && (
             <details className="story mt-4" data-dish={dish.id}>
               <summary className="label-caps">{v.ui.story}</summary>
               <div className="body">
+                {video && <StoryVideo id={video} dishId={dish.id} label={`${sTitle?.text || original}: ${v.ui.story}`} />}
                 {sTitle?.text && (
                   <p className="font-display text-lg leading-snug">
                     <T s={sTitle} pageLang={lang} />
                   </p>
                 )}
-                <p className="mt-2 text-[0.95rem] leading-relaxed text-muted-foreground">
-                  <T s={sBody} pageLang={lang} />
-                  <SpeakButton text={[sTitle?.text, sBody.text].filter(Boolean).join(". ")} lang={sBody.lang} label={listen} />
-                </p>
+                {sBody?.text && (
+                  <p className="mt-2 text-[0.95rem] leading-relaxed text-muted-foreground">
+                    <T s={sBody} pageLang={lang} />
+                    <SpeakButton text={[sTitle?.text, sBody.text].filter(Boolean).join(". ")} lang={sBody.lang} label={listen} />
+                  </p>
+                )}
               </div>
             </details>
           )}

@@ -64,6 +64,7 @@ const storySchema = new Schema<AnyDoc>(
       type: new Schema<AnyDoc>({ ...imageRef, duration: Number }, { _id: false }),
       default: null,
     },
+    youtube_id: { type: String, default: null, match: /^[A-Za-z0-9_-]{11}$/ },
     poster: { type: new Schema<AnyDoc>(imageRef, { _id: false }), default: null },
     text_fallback: { type: M, default: {} },
     tx: { type: M, default: {} },

@@ -13,12 +13,13 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { ALLERGENS } from "@/lib/allergens";
-import type { Category, Dish, Restaurant } from "@/lib/db/types";
-import { resolveText, setLangRaw } from "@/lib/i18n";
+import type { Category, Dish, Restaurant, Story } from "@/lib/db/types";
+import { resolveText, setLangRaw, type LangMap } from "@/lib/i18n";
 import { MediaImage } from "@/lib/media/MediaImage";
+import { parseYouTubeUrl, youtubePosterUrl, youtubeShortUrl } from "@/lib/media/youtube";
 import { UploadButton } from "@/lib/media/UploadButton";
 import { currencySymbol, toMajor, toMinor } from "@/lib/money";
-import type { DishFormValues } from "@/lib/validation";
+import type { DishFormValues, DishStoryValues } from "@/lib/validation";
 
 const DIETARY_OPTIONS: [DishFormValues["dietary"][number], string, "default" | "warn"][] = [
   ["vegetarian", "Vegetarian", "default"],
@@ -54,7 +55,11 @@ type Props = {
   pending: boolean;
   /** bump to start a fresh blank form without closing the dialog ("Save & add another") */
   resetKey?: number;
-  onSubmit: (values: DishFormValues, opts: { another: boolean }) => void;
+  /** the dish's written story, if it has one */
+  story?: Story | null;
+  /** how many OTHER dishes use the same story (editing it changes them too) */
+  storySharedWith?: number;
+  onSubmit: (values: DishFormValues, opts: { another: boolean; story: DishStoryValues }) => void;
 };
 
 export function DishDialog({ open, onOpenChange, dish, resetKey = 0, ...form }: Props) {
@@ -81,6 +86,8 @@ function DishForm({
   dish,
   defaultCategory,
   pending,
+  story,
+  storySharedWith = 0,
   onSubmit,
   onOpenChange,
 }: Omit<Props, "open" | "resetKey">) {
@@ -88,6 +95,11 @@ function DishForm({
   const lang = restaurant.default_language;
   const [v, setV] = useState<DishFormValues>(() => initialValues(dish, defaultCategory));
   const [priceText, setPriceText] = useState(() => (dish ? String(toMajor(dish.price, cur)) : ""));
+  const [storyTitle, setStoryTitle] = useState<LangMap>(() => story?.title ?? {});
+  const [storyText, setStoryText] = useState<LangMap>(() => story?.text_fallback ?? {});
+  const [videoUrl, setVideoUrl] = useState(() => (story?.youtube_id ? youtubeShortUrl(story.youtube_id) : ""));
+  const videoId = parseYouTubeUrl(videoUrl);
+  const videoBad = !!videoUrl.trim() && !videoId;
 
   const set = <K extends keyof DishFormValues>(k: K, val: DishFormValues[K]) => setV((p) => ({ ...p, [k]: val }));
   const toggle = <K extends "allergens" | "dietary">(k: K, item: DishFormValues[K][number]) =>
@@ -97,9 +109,10 @@ function DishForm({
     });
 
   const hasName = !!v.name[lang]?.trim();
+  const canSave = hasName && !videoBad;
   const send = (another: boolean) => {
     const n = Number.parseFloat(priceText.replace(",", "."));
-    onSubmit({ ...v, price: Number.isFinite(n) ? toMinor(n, cur) : 0 }, { another });
+    onSubmit({ ...v, price: Number.isFinite(n) ? toMinor(n, cur) : 0 }, { another, story: { title: storyTitle, text: storyText, video_url: videoUrl } });
   };
 
   return (
@@ -259,6 +272,58 @@ function DishForm({
           </div>
         </FormSection>
 
+        <FormSection title="Story" hint="A few lines and/or a short video about the dish, shown to diners under “The story”. Leave both empty for no story.">
+          <div className="space-y-2">
+            <Label htmlFor="story-title" className="label-caps">Title</Label>
+            <Input
+              id="story-title"
+              lang={lang}
+              value={storyTitle[lang] ?? ""}
+              onChange={(e) => setStoryTitle(setLangRaw(storyTitle, lang, e.target.value))}
+              placeholder="e.g. Where the menu begins"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="story-text" className="label-caps">Story</Label>
+            <Textarea
+              id="story-text"
+              lang={lang}
+              rows={5}
+              value={storyText[lang] ?? ""}
+              onChange={(e) => setStoryText(setLangRaw(storyText, lang, e.target.value))}
+              placeholder="Where it comes from, what is in it, why people love it."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="story-video" className="label-caps">Story video (YouTube)</Label>
+            <Input
+              id="story-video"
+              inputMode="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://youtu.be/…"
+              aria-invalid={videoBad}
+              autoComplete="off"
+            />
+            {videoBad ? (
+              <p className="text-xs text-destructive" role="alert">That is not a YouTube video link. Paste the address of the video, for example https://youtu.be/abc123XYZ_-.</p>
+            ) : videoId ? (
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={youtubePosterUrl(videoId)} alt="" className="aspect-video h-16 border object-cover" />
+                <p className="text-xs text-muted-foreground">Diners tap the poster to play it inside the story. Nothing loads from YouTube until they do.</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Upload the video to YouTube as <b>Unlisted</b> and paste its link. Private videos cannot play here, and embedding must stay allowed in YouTube Studio.</p>
+            )}
+          </div>
+          {storySharedWith > 0 && (
+            <p className="text-xs text-highlight">
+              This story is shared with {storySharedWith} other {storySharedWith === 1 ? "dish" : "dishes"}: changing it changes it for all of them.
+            </p>
+          )}
+        </FormSection>
+
         <FormSection title="Translations">
           <TranslationsPanel
             languages={restaurant.enabled_languages}
@@ -267,21 +332,23 @@ function DishForm({
               { key: "name", label: "Name", value: v.name, onChange: (m) => set("name", m) },
               { key: "description", label: "Description", value: v.description, onChange: (m) => set("description", m), multiline: true },
               { key: "context", label: "What to expect", value: v.context, onChange: (m) => set("context", m), multiline: true },
+              { key: "story-title", label: "Story title", value: storyTitle, onChange: setStoryTitle },
+              { key: "story-text", label: "Story", value: storyText, onChange: setStoryText, multiline: true },
             ]}
           />
         </FormSection>
       </DialogBody>
 
-      <DialogActions note={hasName ? undefined : "Give the dish a name to save it."}>
+      <DialogActions note={!hasName ? "Give the dish a name to save it." : videoBad ? "Fix the YouTube link to save." : undefined}>
         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={pending}>
           Cancel
         </Button>
         {!dish && (
-          <Button type="button" variant="outline" disabled={pending || !hasName} onClick={() => send(true)}>
+          <Button type="button" variant="outline" disabled={pending || !canSave} onClick={() => send(true)}>
             Save &amp; add another
           </Button>
         )}
-        <Button type="submit" disabled={pending || !hasName}>
+        <Button type="submit" disabled={pending || !canSave}>
           {pending ? "Saving…" : dish ? "Save dish" : "Add dish"}
         </Button>
       </DialogActions>

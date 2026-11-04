@@ -10,6 +10,6 @@ export default async function MenuPage({ params }: { params: Promise<{ id: strin
   const restaurant = await restaurants.get(id);
   if (!restaurant) notFound();
   const db = forTenant(restaurant.id);
-  const [categories, dishes] = await Promise.all([db.categories.list(), db.dishes.list()]);
-  return <MenuManager restaurant={restaurant} categories={categories} dishes={dishes} />;
+  const [categories, dishes, stories] = await Promise.all([db.categories.list(), db.dishes.list(), db.stories.list()]);
+  return <MenuManager restaurant={restaurant} categories={categories} dishes={dishes} stories={stories} />;
 }

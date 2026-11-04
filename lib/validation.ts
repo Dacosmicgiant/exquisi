@@ -67,6 +67,10 @@ export const dishSchema = z.object({
 });
 export type DishFormValues = z.infer<typeof dishSchema>;
 
+/** The written story edited from a dish form: title and text per language (text is the "story" shown on the menu). */
+export const dishStorySchema = z.object({ title: langMapSchema, text: langMapSchema, video_url: z.string().max(300).optional() });
+export type DishStoryValues = z.input<typeof dishStorySchema>;
+
 export const storySchema = z.object({
   title: langMapSchema,
   text_fallback: langMapSchema,

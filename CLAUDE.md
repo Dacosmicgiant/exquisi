@@ -60,7 +60,7 @@ Cloudinary is for images only.
    diner pages is `LanguagePicker` (suggested language, search, `ms-lang` cookie, `menu_view` beacon).
    The written dish story is a plain `<details>`. (If films return: a lazy `StoryPlayer` island.) Mutations are Server Actions
    that call `requireStaff()` first.
-4. **Films (dormant add-on).** If re-enabled: lazy player, never preload video, poster first, fall back
+4. **Films (dormant add-on; Cloudinary video).** YouTube story videos are live (see below) and follow the same rules. If the Cloudinary films are re-enabled: lazy player, never preload video, poster first, fall back
    to the written story (`text_fallback`, which is now the primary story text).
 5. **All media through `lib/media`.** API: `getUploadSignature()`, `imageUrl()`, `videoSources()`,
    `posterUrl()`. Only `lib/media/sign.server.ts` imports the `cloudinary` SDK; `next-cloudinary`
@@ -100,6 +100,10 @@ Cloudinary is for images only.
 Dish/category dialogs scroll inside a fixed header and footer (`components/admin/DialogLayout.tsx`). Source-language fields come
 first; translations are last, one language at a time (`TranslationsPanel`), because a restaurant can offer 100+ languages.
 Text boxes keep raw input (`setLangRaw`); `langMapSchema` trims and drops blanks on the server. Do not trim per keystroke.
+A dish's written story (title + text) is edited in the same dialog ("Story", just above Translations) and saved with the dish
+(`saveDishStory` in the menu actions): empty text unlinks it (and deletes it if no other dish uses it), a story shared by
+several dishes changes for all of them (the form says so). **Story links are always read from the database, never trusted
+from the browser**: a dialog opened before a story existed once wrote its stale empty `story_ids` over a new link.
 
 ## Long lists (admin)
 Any list that can grow past a screen uses the shared folding pattern in `components/admin/Collapsible.tsx`: `Collapsible`
@@ -109,6 +113,17 @@ folded groups. Applied to: menu categories, the translation language checklist (
 translating / complete), review & edit (per dish), glossary, theme gallery (by category), restaurants (by status), QR codes,
 analytics rows. Preview uses one language `<select>`, not a button per language. Don't render one control per language.
 The diner language screen is deliberately NOT folded: diners must see every offered language (search + suggested on top).
+
+## Story videos (YouTube)
+A dish's story can carry a video: staff paste an **unlisted YouTube link** in the dish dialog (Story → "Story video"). Only the
+11-character id is stored (`stories.youtube_id`); `parseYouTubeUrl` in `lib/media/youtube.ts` is the only place a link is read, and
+every URL (poster, watch, embed) is rebuilt from the id, so nothing else can be injected (tests: `tests/youtube.test.ts`). On the menu
+it lives inside the "The story" `<details>` as a 16:9 poster (`StoryVideo`): **nothing is requested from YouTube until the story is
+opened, and the player (`youtube-nocookie.com`, autoplay) only loads on tap**, via an inline script (`StoryVideoScript`, rendered only
+when the menu has a video; no React island). Without JS the poster is a plain link to YouTube. Closing a story or category puts the
+poster back so nothing keeps playing out of sight. A tap sends the existing `story_play` analytics event. A story with only a video
+(no text) is valid. This is separate from the dormant Cloudinary `video` field (still unused). Private videos, or ones with embedding
+turned off in YouTube Studio, will not play.
 
 ## Media (images only)
 Uploads are fully signed, browser → Cloudinary directly (`lib/media/UploadButton.tsx`, the only place that
