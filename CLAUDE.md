@@ -169,7 +169,7 @@ brass rules, near-square radii, Cormorant Garamond + Jost, roman-numeral categor
 
 ## Commands (npm)
 `npm run dev` · `typecheck` · `lint` · `test` (uses throwaway DB `menu_stories_test`) ·
-`seed` (demo restaurant `casa-valdarno`: 10 dishes, glossary) · `translate -- --slug X [--langs hi,ar] [--force]` ·
+`seed` (demo restaurant `casa-valdarno`: 10 dishes, glossary) · `seed:demo [-- --translate hi,ja,… | --reset]` (video-demo restaurant `the-corner-kitchen`: 4 sections × 4 everyday dishes with stories; see `DEMO_VIDEO_SCRIPT.md`) · `translate -- --slug X [--langs hi,ar] [--force]` ·
 `quality [-- --langs hi,ar --engines strong]` (language/engine scorecard + HTML report in `reports/`) ·
 `create-admin` · `fonts` · `lhci` (Lighthouse CI; needs `CHROME_PATH`) · `smoke` (end-to-end: QR → language → menu → story → admin analytics) · `vocab:export`
 

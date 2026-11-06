@@ -12,6 +12,7 @@
     "fonts": "tsx scripts/copy-fonts.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "seed": "tsx scripts/seed.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
     "lhci": "lhci autorun",
     "translate": "tsx scripts/translate.ts",
     "quality": "tsx scripts/quality.ts",
