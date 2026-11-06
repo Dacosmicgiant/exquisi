@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { LogoField } from "@/components/admin/LogoField";
 import { RestaurantThemePanel } from "@/components/admin/RestaurantThemePanel";
 import { restaurants } from "@/lib/db/platform";
+import { resolveText } from "@/lib/i18n";
 import { getPlatformTheme, getRestaurantTheme, listThemeOptions } from "@/lib/theme/server";
 import { saveBrandTheme } from "./actions";
 
@@ -27,6 +28,8 @@ export default async function BrandPage({ params }: { params: Promise<{ id: stri
       </p>
       <RestaurantThemePanel
         themes={themes}
+        logo={r.brand.logo ?? null}
+        brandName={resolveText(r.name, r.default_language, r.default_language)}
         houseTheme={house}
         savedRef={savedRef}
         savedTheme={effective}

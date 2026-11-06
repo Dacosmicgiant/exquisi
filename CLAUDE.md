@@ -148,7 +148,13 @@ bar & lounge, seafood & coastal, casual & street food, modern & minimal), built 
 (`lib/theme/palette.ts`, keeps text readable; `tests/theme.presets.test.ts` enforces contrast, fonts and validity).
 Staff can save unlimited named **custom themes** (platform collection `custom_themes`, `customThemes` in
 `lib/db/platform.ts`; always stored as a complete Theme) at `/admin/themes`, or from any restaurant's Brand tab
-("Save as custom theme"). A restaurant stores only the reference plus its diff, so editing a custom theme rebuilds
+("Save as custom theme"). **Logo themes:** the Brand tab reads the restaurant's logo colours **in the browser** (canvas pixels →
+`extractPalette`, `lib/theme/logo.ts`; no service, no API) and offers three complete themes built around them (`suggestThemes`,
+`lib/theme/suggest.ts`: Tonal, Contrast with a complementary or second-logo-colour accent, Evening in dark mode; a black-and-white
+logo gets a different accent per theme). Everything goes through `buildColors`, so text stays readable for any logo
+(`tests/theme.logo.test.ts` sweeps the colour wheel). "Use this theme" saves it to the custom library and selects it; staff still press
+Save theme to apply it. Import the URL builder from `lib/media/urls` in client code, never the `lib/media` index (it pulls server-only
+signing code). A restaurant stores only the reference plus its diff, so editing a custom theme rebuilds
 every menu using it (`revalidateThemeUsers`); a custom theme in use cannot be deleted. Fonts live in
 `lib/theme/fonts.ts` (19 self-hosted variable fonts; add one = install `@fontsource-variable/x`, add to the catalog and `scripts/copy-fonts.ts`, `npm run fonts`). Pure logic is in `lib/theme/*`
 (`resolve` validates section-by-section so bad data falls back instead of breaking pages;

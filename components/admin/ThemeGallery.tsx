@@ -27,6 +27,11 @@ const MINE = "mine";
 /** One @font-face per catalog font; the browser only downloads the ones a visible card actually uses. */
 const ALL_FONT_FACES = FONT_CATALOG.map((f) => fontFaceCss({ fonts: { display: f.key, body: f.key } } as Theme)).join("");
 
+/** The @font-face rules the preview cards need (browsers only download the fonts a visible card uses). */
+export function ThemeFontFaces() {
+  return <style dangerouslySetInnerHTML={{ __html: ALL_FONT_FACES }} />;
+}
+
 function Half({ cls, mode, theme }: { cls: string; mode: "light" | "dark"; theme: Theme }) {
   return (
     <div
@@ -54,7 +59,8 @@ function Half({ cls, mode, theme }: { cls: string; mode: "light" | "dark"; theme
   );
 }
 
-function ThemeCard({
+/** One theme as a light + dark preview card (used by the gallery and by the logo suggestions). */
+export function ThemeCard({
   option,
   index,
   selected,

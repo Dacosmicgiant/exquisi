@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { HouseStyleCard, ThemeGallery, type GalleryTheme } from "@/components/admin/ThemeGallery";
+import { LogoThemeSuggestions } from "@/components/admin/LogoThemeSuggestions";
 import { SaveAsThemeButton } from "@/components/admin/SaveAsThemeButton";
 import { ThemeEditor } from "@/components/admin/ThemeEditor";
+import type { ImageRef } from "@/lib/db/types";
 import type { Theme, ThemeOverrides } from "@/lib/theme/schema";
 
 type Save = (themeRef: string | null, overrides: ThemeOverrides) => Promise<{ ok: boolean; error?: string }>;
@@ -14,7 +16,9 @@ type Save = (themeRef: string | null, overrides: ThemeOverrides) => Promise<{ ok
  * plus only the tweaks that differ from it, so a custom theme edited later flows through to its restaurants.
  */
 export function RestaurantThemePanel({
-  themes,
+  themes: savedThemes,
+  logo,
+  brandName,
   houseTheme,
   savedRef,
   savedTheme,
@@ -22,6 +26,9 @@ export function RestaurantThemePanel({
   children,
 }: {
   themes: GalleryTheme[];
+  /** the restaurant's logo, whose colours the suggestions follow */
+  logo: ImageRef | null;
+  brandName: string;
   /** the platform default look ("House style") */
   houseTheme: Theme;
   /** the theme the restaurant starts from today (null = house style) */
@@ -32,6 +39,9 @@ export function RestaurantThemePanel({
   children?: React.ReactNode;
 }) {
   const [ref, setRef] = useState<string | null>(savedRef);
+  // themes created from a logo suggestion show up at once (the server list catches up after the refresh)
+  const [fresh, setFresh] = useState<GalleryTheme[]>([]);
+  const themes = useMemo(() => [...fresh.filter((f) => !savedThemes.some((t) => t.ref === f.ref)), ...savedThemes], [fresh, savedThemes]);
   const current = ref ? themes.find((t) => t.ref === ref) : undefined;
   // a saved reference whose theme was deleted falls back to the house style
   const base = current?.theme ?? houseTheme;
@@ -48,6 +58,15 @@ export function RestaurantThemePanel({
           </p>
         </div>
         <div className="mt-6">
+          <LogoThemeSuggestions
+            logo={logo}
+            brandName={brandName}
+            houseTheme={houseTheme}
+            onUse={(o) => {
+              setFresh((f) => [o, ...f]);
+              setRef(o.ref);
+            }}
+          />
           <ThemeGallery
             themes={themes}
             selectedRef={ref}
