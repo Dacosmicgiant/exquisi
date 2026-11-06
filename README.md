@@ -36,5 +36,5 @@ npm run vocab:export              # allergen/UI labels for native-speaker review
 ## Before showing a restaurant
 - Have native speakers review the allergen vocabulary (`lib/i18n/vocab.ts`) for every language you offer.
 - Run `npm run quality` for each language you plan to sell and set its tier in `lib/i18n/languages.ts`.
-- Set `APP_URL` to the final public domain **before printing QR codes**.
+- Set `APP_URL` to the final public domain (production: `https://anylanguagemenu.com`) **before printing QR codes**. Codes printed on an earlier address keep working.
 - Rotate any secrets that were pasted into chats or shared.

@@ -15,7 +15,7 @@ and the restaurant set it all up in a few clicks and a brand of its own.**
 
 | # | Do this | Why |
 |---|---|---|
-| 1 | **Deploy the latest code** (commit + push, wait for the Vercel build) and record against `https://menu-stories.vercel.app`, not `localhost`. | The card layout, story videos and story editor are not on production yet. A localhost QR code can't be scanned by a phone, and the dev server shows a corner badge and is slow on first load. |
+| 1 | **Deploy the latest code** (commit + push, wait for the Vercel build) and record against `https://anylanguagemenu.com`, not `localhost`. | The card layout, story videos and story editor are not on production yet. A localhost QR code can't be scanned by a phone, and the dev server shows a corner badge and is slow on first load. |
 | 2 | **Warm every page once** (open each language, each section, the admin tabs) a minute before recording. | First visits can take several seconds; you don't want that on camera. |
 | 3 | **Add the 16 story videos** (see §5): paste each unlisted YouTube link into the dish's *Story → Story video* field, or into `VIDEOS` in `scripts/seed-demo.ts` and run `npm run seed:demo`. | The video scene needs real links. Only the dish you open on camera needs one (**Fish and Chips** in scene 4), but the pitch is "every dish". |
 | 4 | **Upload dish photos** (landscape 4:3, at least 1200 × 900) and a **logo** on the *Brand* tab. | The demo data has no photos or logo: cards with photos on top are the hero shot. |

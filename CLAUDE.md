@@ -180,8 +180,9 @@ brass rules, near-square radii, Cormorant Garamond + Jost, roman-numeral categor
 `create-admin` · `fonts` · `lhci` (Lighthouse CI; needs `CHROME_PATH`) · `smoke` (end-to-end: QR → language → menu → story → admin analytics) · `vocab:export`
 
 ## Env (see `.env.example`; real values only in gitignored `.env.local`)
-`MONGODB_URI`, `AUTH_SECRET`, `AUTH_URL`, `AUTH_TRUST_HOST`, `APP_URL` (encoded into QR codes —
-permanent once printed), `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET/UPLOAD_PRESET`,
+`MONGODB_URI`, `AUTH_SECRET`, `AUTH_URL`, `AUTH_TRUST_HOST`, `APP_URL` (encoded into QR codes and share links —
+permanent once printed; production is `https://anylanguagemenu.com`, set in Vercel and applied on the next deploy; the old
+`menu-stories.vercel.app` address keeps working for codes already printed; `AUTH_URL` is unset in production, `AUTH_TRUST_HOST` covers it), `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET/UPLOAD_PRESET`,
 `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `TRANSLATION_PROVIDER`, `MISTRAL_API_KEY`, `MISTRAL_MODEL`,
 `MISTRAL_MODEL_STRONG`, `DEEPL_API_KEY` (":fx" suffix = free plan), optional `DEEPL_CONCURRENCY` (default 5; the free plan 429s above ~8),
 `TRANSLATION_CONCURRENCY`, optional `TRANSLATION_JUDGE_MODEL` (quality script only). `NEXT_PUBLIC_CLOUDINARY_*` are derived in `next.config.ts`.

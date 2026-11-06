@@ -10,7 +10,21 @@ import { Input } from "@/components/ui/input";
 import type { QrCode } from "@/lib/db/types";
 import { createQr, renameQr } from "@/app/(admin)/admin/(app)/restaurants/[id]/qr/actions";
 
-export function QrManager({ restaurantId, codes, urls }: { restaurantId: string; codes: QrCode[]; urls: Record<string, string> }) {
+export function QrManager({
+  restaurantId,
+  codes,
+  urls,
+  address,
+  unconfigured = false,
+}: {
+  restaurantId: string;
+  codes: QrCode[];
+  urls: Record<string, string>;
+  /** the public address the codes point to, without https:// */
+  address: string;
+  /** production without a public address configured: these codes must not be printed */
+  unconfigured?: boolean;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [label, setLabel] = useState("");
@@ -42,8 +56,13 @@ export function QrManager({ restaurantId, codes, urls }: { restaurantId: string;
     <div className="space-y-10">
       <p className="max-w-xl text-muted-foreground">
         One code per table or location. A code’s address never changes, so printed cards keep working even if the menu is renamed.
-        Make sure <code>APP_URL</code> is the final public domain before printing.
+        New codes point to <b className="text-foreground">{address}</b>; cards printed earlier on a previous address keep working too.
       </p>
+      {unconfigured && (
+        <p className="max-w-xl border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
+          The app’s public address is not set, so these codes point to a local address. Do not print or send them until it is configured.
+        </p>
+      )}
       <form onSubmit={add} className="flex max-w-md gap-2">
         <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Table 4, Terrace, Bar…" aria-label="Table or location" />
         <Button type="submit" disabled={pending}>

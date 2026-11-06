@@ -1,16 +1,22 @@
 import QRCode from "qrcode";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-/** The permanent URL a code resolves through. APP_URL must be the final public domain before printing. */
+/** The app's public address (APP_URL, no trailing slash). Everything printed or shared is built from it. */
+export function appOrigin(origin?: string): string {
+  return (process.env.APP_URL || origin || "http://localhost:3000").replace(/\/+$/, "");
+}
+
+/** True when the public address is still a local one: fine in development, never print or send links like that. */
+export const isLocalOrigin = (origin: string) => /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(origin);
+
+/** The permanent URL a code resolves through. */
 export function qrTargetUrl(code: string, origin?: string): string {
-  const base = (process.env.APP_URL || origin || "http://localhost:3000").replace(/\/+$/, "");
-  return `${base}/r/${code}`;
+  return `${appOrigin(origin)}/r/${code}`;
 }
 
 /** Permanent public address of a restaurant's menu (optionally straight into one language), e.g. for booking messages. */
 export function menuAddress(slug: string, lang?: string, origin?: string): string {
-  const base = (process.env.APP_URL || origin || "http://localhost:3000").replace(/\/+$/, "");
-  return `${base}/m/${slug}${lang ? `/${lang}` : ""}`;
+  return `${appOrigin(origin)}/m/${slug}${lang ? `/${lang}` : ""}`;
 }
 
 export function qrPng(url: string, width = 1024): Promise<Buffer> {

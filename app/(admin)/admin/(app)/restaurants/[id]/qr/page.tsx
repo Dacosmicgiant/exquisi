@@ -4,7 +4,7 @@ import { ShareLinks } from "@/components/admin/ShareLinks";
 import { getLanguage } from "@/lib/i18n/languages";
 import { restaurants } from "@/lib/db/platform";
 import { forTenant } from "@/lib/db/tenant";
-import { menuAddress, qrTargetUrl } from "@/lib/qr/generate";
+import { appOrigin, isLocalOrigin, menuAddress, qrTargetUrl } from "@/lib/qr/generate";
 
 export const metadata = { title: "QR codes" };
 
@@ -23,7 +23,7 @@ export default async function QrPage({ params }: { params: Promise<{ id: string 
         addresses={addresses}
         languages={[r.default_language, ...langs].map((c) => ({ code: c, native: getLanguage(c).native }))}
       />
-      <QrManager restaurantId={r.id} codes={codes} urls={Object.fromEntries(codes.map((c) => [c.id, qrTargetUrl(c.code)]))} />
+      <QrManager restaurantId={r.id} codes={codes} address={appOrigin().replace(/^https?:\/\//, "")} unconfigured={process.env.NODE_ENV === "production" && isLocalOrigin(appOrigin())} urls={Object.fromEntries(codes.map((c) => [c.id, qrTargetUrl(c.code)]))} />
     </div>
   );
 }

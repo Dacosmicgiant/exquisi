@@ -30,3 +30,25 @@ describe("menu share addresses", () => {
     expect(menuAddress("casa-valdarno", "hi")).toBe("https://menu.example.com/m/casa-valdarno/hi");
   });
 });
+
+describe("public address", () => {
+  it("builds every printed and shared address from one place and ignores trailing slashes", async () => {
+    const { appOrigin, menuAddress, qrTargetUrl } = await import("@/lib/qr/generate");
+    const saved = process.env.APP_URL;
+    process.env.APP_URL = "https://anylanguagemenu.com/";
+    expect(appOrigin()).toBe("https://anylanguagemenu.com");
+    expect(qrTargetUrl("abc123")).toBe("https://anylanguagemenu.com/r/abc123");
+    expect(menuAddress("the-corner-kitchen")).toBe("https://anylanguagemenu.com/m/the-corner-kitchen");
+    expect(menuAddress("the-corner-kitchen", "hi")).toBe("https://anylanguagemenu.com/m/the-corner-kitchen/hi");
+    delete process.env.APP_URL;
+    expect(appOrigin()).toBe("http://localhost:3000");
+    expect(appOrigin("https://example.org")).toBe("https://example.org");
+    if (saved !== undefined) process.env.APP_URL = saved;
+  });
+
+  it("recognises local addresses so production can refuse to print them", async () => {
+    const { isLocalOrigin } = await import("@/lib/qr/generate");
+    for (const u of ["http://localhost:3000", "http://localhost", "https://localhost:8443", "http://127.0.0.1:3000", "http://[::1]:3000"]) expect(isLocalOrigin(u), u).toBe(true);
+    for (const u of ["https://anylanguagemenu.com", "https://www.anylanguagemenu.com", "https://localhost.example.com", "https://menu-stories.vercel.app"]) expect(isLocalOrigin(u), u).toBe(false);
+  });
+});
